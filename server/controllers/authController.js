@@ -4,8 +4,19 @@ const User = require('../models/User');
 exports.googleCallback = (req, res) => {
     try {
         const user = req.user;
+        console.log("DEBUG: Google Callback User:", JSON.stringify(user, null, 2));
+
+        const payload = {
+            id: user._id,
+            role: user.role,
+            isPhoneVerified: user.isPhoneVerified,
+            name: user.name,
+            avatar: user.avatar
+        };
+        console.log("DEBUG: Token Payload:", JSON.stringify(payload, null, 2));
+
         const token = jwt.sign(
-            { id: user._id, role: user.role, isPhoneVerified: user.isPhoneVerified },
+            payload,
             process.env.JWT_SECRET,
             { expiresIn: '30d' }
         );
@@ -45,7 +56,13 @@ exports.verifyPhone = async (req, res) => {
 
         // Regenerate token with updated isPhoneVerified status
         const token = jwt.sign(
-            { id: user._id, role: user.role, isPhoneVerified: user.isPhoneVerified },
+            {
+                id: user._id,
+                role: user.role,
+                isPhoneVerified: user.isPhoneVerified,
+                name: user.name,
+                avatar: user.avatar
+            },
             process.env.JWT_SECRET,
             { expiresIn: '30d' }
         );

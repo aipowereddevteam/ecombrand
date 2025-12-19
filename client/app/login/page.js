@@ -24,7 +24,8 @@ export default function LoginPage() {
                 if (!payload.isPhoneVerified) {
                     router.push('/verify-phone');
                 } else {
-                    router.push('/');
+                    // Force hard refresh to ensure Header updates with new user data
+                    window.location.href = '/';
                 }
             } catch (e) {
                 console.error("Token decode error", e);

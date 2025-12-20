@@ -45,7 +45,8 @@ exports.createProduct = async (req, res) => {
             category,
             stock: parsedStock,
             images: imagesLinks,
-            isActive: true
+            isActive: true,
+            createdBy: req.user.id
         });
 
         res.status(201).json({

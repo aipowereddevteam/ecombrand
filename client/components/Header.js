@@ -1,18 +1,22 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, ChevronDown, Menu, LogOut, LayoutDashboard } from 'lucide-react';
+import { Search, ShoppingCart, User, ChevronDown, Menu, LogOut, LayoutDashboard, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
+import { useSelector } from 'react-redux';
 
 export default function Header() {
     const router = useRouter();
+    const { cartItems } = useSelector((state) => state.cart || { cartItems: [] });
     const [user, setUser] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
+        setMounted(true);
         const token = localStorage.getItem('token');
         if (token) {
             try {
@@ -49,7 +53,7 @@ export default function Header() {
     };
 
     return (
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
+        <header className="bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-50 transition-colors">
             <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between gap-8">
 
                 {/* Logo */}
@@ -68,72 +72,86 @@ export default function Header() {
                         <input
                             type="text"
                             placeholder="Search for anything..."
-                            className="w-full py-3 px-12 rounded-full bg-gray-50 border border-transparent focus:bg-white focus:border-blue-200 focus:ring-4 focus:ring-blue-50/50 transition-all font-medium text-gray-600 placeholder:text-gray-400 focus:outline-none"
+                            className="w-full py-3 px-12 rounded-full bg-accent/50 border border-transparent focus:bg-background focus:border-primary/30 focus:ring-4 focus:ring-primary/10 transition-all font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
                         />
-                        <Search className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                        <Search className="absolute left-4 top-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" size={20} />
                     </div>
                 </div>
 
                 {/* Right Actions */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4 lg:gap-6">
+
+
 
                     {/* Login / User Menu */}
                     {user ? (
                         <div className="relative" ref={dropdownRef}>
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="flex items-center gap-3 hover:bg-gray-50 py-1.5 px-2 rounded-full transition-all border border-transparent hover:border-gray-200"
+                                className="flex items-center gap-3 hover:bg-accent py-1.5 px-2 rounded-full transition-all border border-transparent hover:border-border"
                             >
                                 {user.avatar ? (
                                     <img
                                         src={user.avatar}
                                         alt="User"
-                                        className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent group-hover:ring-blue-100"
+                                        className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent group-hover:ring-primary/20"
                                         referrerPolicy="no-referrer"
                                     />
                                 ) : (
-                                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                         <User size={20} />
                                     </div>
                                 )}
-                                <span className="font-semibold text-sm text-gray-700 max-w-[100px] truncate hidden lg:block">
+                                <span className="font-semibold text-sm text-foreground max-w-[100px] truncate hidden lg:block">
                                     {user.name.split(' ')[0]}
                                 </span>
-                                <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {/* Dropdown */}
                             {isDropdownOpen && (
-                                <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-2">
-                                    <div className="px-4 py-3 mb-2 bg-gray-50/50 rounded-xl">
-                                        <p className="text-xs text-gray-500 font-medium mb-0.5">Signed in as</p>
-                                        <p className="font-bold text-gray-900 truncate">{user.name}</p>
+                                <div className="absolute right-0 top-full mt-3 w-64 bg-card rounded-2xl shadow-xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-2">
+                                    <div className="px-4 py-3 mb-2 bg-muted/50 rounded-xl">
+                                        <p className="text-xs text-muted-foreground font-medium mb-0.5">Signed in as</p>
+                                        <p className="font-bold text-foreground truncate">{user.name}</p>
                                     </div>
 
                                     {user.role === 'admin' && (
-                                        <Link
-                                            href="/admin/dashboard"
-                                            className="px-4 py-2.5 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                                            onClick={() => setIsDropdownOpen(false)}
-                                        >
-                                            <LayoutDashboard size={18} />
-                                            Dashboard
-                                        </Link>
+                                        <>
+                                            <Link
+                                                href="/admin/orders"
+                                                className="px-4 py-2.5 hover:bg-accent rounded-lg flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                                                onClick={() => setIsDropdownOpen(false)}
+                                            >
+                                                <Package size={18} />
+                                                Manage Orders
+                                            </Link>
+                                            {/* Dashboard link if needed later */}
+                                        </>
                                     )}
 
                                     <Link
+                                        href="/orders"
+                                        className="px-4 py-2.5 hover:bg-accent rounded-lg flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                                        onClick={() => setIsDropdownOpen(false)}
+                                    >
+                                        <Package size={18} />
+                                        My Orders
+                                    </Link>
+
+                                    <Link
                                         href="/profile"
-                                        className="px-4 py-2.5 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                                        className="px-4 py-2.5 hover:bg-accent rounded-lg flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                                         onClick={() => setIsDropdownOpen(false)}
                                     >
                                         <User size={18} />
                                         My Profile
                                     </Link>
 
-                                    <div className="h-px bg-gray-100 my-2"></div>
+                                    <div className="h-px bg-border my-2"></div>
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2.5 hover:bg-red-50 rounded-lg text-red-600 flex items-center gap-3 text-sm font-medium transition-colors"
+                                        className="w-full text-left px-4 py-2.5 hover:bg-destructive/10 rounded-lg text-destructive flex items-center gap-3 text-sm font-medium transition-colors"
                                     >
                                         <LogOut size={18} />
                                         Log Out
@@ -142,20 +160,24 @@ export default function Header() {
                             )}
                         </div>
                     ) : (
-                        <Link href="/login" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 text-sm">
+                        <Link href="/login" className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-semibold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 text-sm">
                             Login
                         </Link>
                     )}
 
                     {/* Cart */}
-                    <Link href="/cart" className="relative p-2 hover:bg-gray-100 rounded-full transition-colors group">
-                        <ShoppingCart size={24} className="text-gray-600 group-hover:text-blue-600 transition-colors" />
-                        <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full ring-2 ring-white">2</span>
+                    <Link href="/cart" className="relative p-2 hover:bg-accent rounded-full transition-colors group">
+                        <ShoppingCart size={24} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                        {mounted && cartItems.length > 0 && (
+                            <span className="absolute top-0 right-0 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center rounded-full ring-2 ring-background">
+                                {cartItems.length}
+                            </span>
+                        )}
                     </Link>
 
                     {/* Mobile Menu Icon */}
-                    <button className="md:hidden p-2 hover:bg-gray-100 rounded-full" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                        <Menu size={24} className="text-gray-600" />
+                    <button className="md:hidden p-2 hover:bg-accent rounded-full" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                        <Menu size={24} className="text-muted-foreground" />
                     </button>
                 </div>
             </div>
@@ -172,8 +194,9 @@ export default function Header() {
                         <Search className="absolute left-3 top-3 text-gray-400" size={18} />
                     </div>
                     {user && user.role === 'admin' && (
-                        <Link href="/admin/dashboard" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">Dashboard</Link>
+                        <Link href="/admin/orders" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">Manage Orders</Link>
                     )}
+                    <Link href="/orders" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">My Orders</Link>
                 </div>
             )}
         </header>

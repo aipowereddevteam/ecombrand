@@ -79,12 +79,12 @@ export default function VerifyPhonePage() {
     };
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50">
-            <div className="z-10 w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-                <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Verify Phone</h1>
+        <div className="flex min-h-screen flex-col items-center justify-center p-24 bg-background">
+            <div className="z-10 w-full max-w-md p-8 bg-card rounded-lg shadow-md border border-border">
+                <h1 className="text-3xl font-bold text-center mb-8 text-foreground">Verify Phone</h1>
 
                 {message && (
-                    <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded-md text-sm">
+                    <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-100 rounded-md text-sm">
                         {message}
                     </div>
                 )}
@@ -93,30 +93,30 @@ export default function VerifyPhonePage() {
 
                 {!verificationId ? (
                     <div className="flex flex-col gap-4">
-                        <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <label className="block text-sm font-medium text-foreground">Phone Number</label>
                         <input
                             type="tel"
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             placeholder="+1234567890"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                            className="mt-1 block w-full px-3 py-2 border border-input rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-background text-foreground"
                         />
                         <button
                             onClick={onSendOTP}
-                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                         >
                             Send OTP
                         </button>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
-                        <label className="block text-sm font-medium text-gray-700">OTP Code</label>
+                        <label className="block text-sm font-medium text-foreground">OTP Code</label>
                         <input
                             type="text"
                             value={verificationCode}
                             onChange={(e) => setVerificationCode(e.target.value)}
                             placeholder="123456"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                            className="mt-1 block w-full px-3 py-2 border border-input rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-background text-foreground"
                         />
                         <button
                             onClick={onVerifyOTP}

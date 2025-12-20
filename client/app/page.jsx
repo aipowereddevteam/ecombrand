@@ -30,17 +30,17 @@ export default function Home() {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-100 pb-10">
+        <div className="min-h-screen bg-background pb-10">
 
             {/* Categories Row */}
-            <div className="bg-white shadow-sm mb-4">
+            <div className="bg-card shadow-sm border-b border-border mb-4">
                 <div className="max-w-7xl mx-auto px-4 py-3 flex gap-4 md:gap-8 overflow-x-auto no-scrollbar">
                     {categories.map((cat, i) => (
                         <div key={i} className="flex flex-col items-center cursor-pointer min-w-[64px] group">
-                            <div className="h-16 w-16 mb-1">
-                                <img src={cat.img} alt={cat.name} className="h-full w-full object-contain" />
+                            <div className="h-16 w-16 mb-1 bg-muted rounded-full p-2">
+                                <img src={cat.img} alt={cat.name} className="h-full w-full object-contain mix-blend-multiply" />
                             </div>
-                            <span className="text-sm font-medium text-gray-800 group-hover:text-blue-600">{cat.name}</span>
+                            <span className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">{cat.name}</span>
                         </div>
                     ))}
                 </div>
@@ -48,7 +48,7 @@ export default function Home() {
 
             {/* Hero Banner (Static for now) */}
             <div className="max-w-7xl mx-auto px-2 mb-4">
-                <div className="relative w-full h-48 md:h-72 bg-gray-300 overflow-hidden">
+                <div className="relative w-full h-48 md:h-72 bg-muted rounded-xl overflow-hidden">
                     {/* Placeholder for Slider */}
                     <img
                         src="https://rukminim1.flixcart.com/fk-p-flap/1600/270/image/1e174e2d4d9b7100.jpg"
@@ -60,30 +60,30 @@ export default function Home() {
 
             {/* Product Grid */}
             <div className="max-w-7xl mx-auto px-2">
-                <div className="bg-white p-4 shadow-sm">
-                    <h2 className="text-xl font-bold mb-4">Suggested for You</h2>
+                <div className="bg-card p-4 shadow-sm rounded-xl border border-border">
+                    <h2 className="text-xl font-bold mb-4 text-foreground">Suggested for You</h2>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {products.length > 0 ? products.map(product => (
-                            <div key={product._id} className="border p-4 hover:shadow-lg transition-shadow flex flex-col group cursor-pointer">
-                                <div className="h-48 w-full mb-4 flex items-center justify-center relative">
+                            <Link href={`/product/${product._id}`} key={product._id} className="border border-border p-4 hover:shadow-lg transition-all flex flex-col group cursor-pointer block bg-card rounded-xl hover:border-primary/50">
+                                <div className="h-48 w-full mb-4 flex items-center justify-center relative bg-muted/20 rounded-lg p-4">
                                     <img
                                         src={product.images && product.images[0] ? product.images[0].url : 'https://via.placeholder.com/150'}
                                         alt={product.title}
-                                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
+                                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform mix-blend-multiply dark:mix-blend-normal"
                                     />
                                 </div>
-                                <h3 className="font-medium text-gray-800 truncate mb-1" title={product.title}>{product.title}</h3>
+                                <h3 className="font-medium text-foreground truncate mb-1" title={product.title}>{product.title}</h3>
                                 <div className="flex items-end gap-2 mb-1">
-                                    <span className="font-bold text-lg">₹{product.price}</span>
+                                    <span className="font-bold text-lg text-foreground">₹{product.price}</span>
                                     {/* Fake original price logic */}
-                                    <span className="text-gray-500 line-through text-sm">₹{Math.round(product.price * 1.2)}</span>
+                                    <span className="text-muted-foreground line-through text-sm">₹{Math.round(product.price * 1.2)}</span>
                                     <span className="text-green-600 text-sm font-medium">20% off</span>
                                 </div>
-                                <span className="text-xs text-gray-500 mb-2">Free delivery</span>
-                            </div>
+                                <span className="text-xs text-muted-foreground mb-2">Free delivery</span>
+                            </Link>
                         )) : (
-                            <div className="col-span-4 text-center py-10 text-gray-500">Loading products...</div>
+                            <div className="col-span-4 text-center py-10 text-muted-foreground">Loading products...</div>
                         )}
                     </div>
                 </div>

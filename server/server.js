@@ -18,6 +18,8 @@ app.use(passport.initialize());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
 
 
 app.get('/', (req, res) => {

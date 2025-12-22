@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, ShoppingCart, User, ChevronDown, Menu, LogOut, Package } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { useSelector } from 'react-redux';
@@ -75,7 +76,7 @@ export default function Header() {
 
                 {/* Search Bar */}
                 <div className="hidden md:flex flex-1 max-w-xl mx-auto">
-                    <form 
+                    <form
                         onSubmit={(e) => {
                             e.preventDefault();
                             const form = e.target as HTMLFormElement;
@@ -86,7 +87,7 @@ export default function Header() {
                                 router.push('/');
                             }
                         }}
-                    className="relative w-full group">
+                        className="relative w-full group">
                         <input
                             type="text"
                             name="search"
@@ -101,6 +102,11 @@ export default function Header() {
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-4 lg:gap-6">
+
+                    {/* Notification Bell (Admin Only) */}
+                    {user && user.role === 'admin' && (
+                        <NotificationBell />
+                    )}
 
                     {/* Login / User Menu */}
                     {user ? (
@@ -211,7 +217,7 @@ export default function Header() {
             {/* Mobile Menu */}
             {isMenuOpen && (
                 <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 p-4 shadow-xl animate-in slide-in-from-top-5">
-                    <form 
+                    <form
                         onSubmit={(e) => {
                             e.preventDefault();
                             setIsMenuOpen(false);
@@ -236,8 +242,8 @@ export default function Header() {
                     </form>
                     {user && user.role === 'admin' && (
                         <>
-                             <Link href="/admin/dashboard" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">Admin Dashboard</Link>
-                             <Link href="/admin/orders" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">Manage Orders</Link>
+                            <Link href="/admin/dashboard" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">Admin Dashboard</Link>
+                            <Link href="/admin/orders" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">Manage Orders</Link>
                         </>
                     )}
                     <Link href="/orders" className="block py-3 px-4 hover:bg-gray-50 rounded-xl text-gray-700 font-medium">My Orders</Link>

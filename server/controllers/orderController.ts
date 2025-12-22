@@ -24,17 +24,17 @@ export const newOrder = async (req: Request, res: Response, next: NextFunction) 
 
         // 1. Atomic Stock Deduction
         for (const item of orderItems) {
-            
+
             // Construct dynamic key for dot notation, e.g., "stock.M"
             const sizeKey = `stock.${item.size}`;
-            
+
             const product = await Product.findOneAndUpdate(
-                { 
-                    _id: item.product, 
-                    [sizeKey]: { $gt: 0 } 
+                {
+                    _id: item.product,
+                    [sizeKey]: { $gt: 0 }
                 },
-                { 
-                    $inc: { [sizeKey]: -item.quantity } 
+                {
+                    $inc: { [sizeKey]: -item.quantity }
                 },
                 { session, new: true }
             );
@@ -42,8 +42,8 @@ export const newOrder = async (req: Request, res: Response, next: NextFunction) 
             if (!product) {
                 await session.abortTransaction();
                 session.endSession();
-                return res.status(409).json({ 
-                    error: `Out of Stock: Item ${item.name} (Size: ${item.size}) is no longer available.` 
+                return res.status(409).json({
+                    error: `Out of Stock: Item ${item.name} (Size: ${item.size}) is no longer available.`
                 });
             }
         }
@@ -57,11 +57,11 @@ export const newOrder = async (req: Request, res: Response, next: NextFunction) 
             taxPrice,
             shippingPrice,
             totalPrice,
-            paidAt: Date.now(),
+            paidAt: new Date(),
             user: (req as any).user.id,
             orderHistory: [{
                 status: "Processing",
-                timestamp: Date.now(),
+                timestamp: new Date(),
                 comment: "Order Placed"
             }]
         }], { session });
@@ -85,7 +85,7 @@ export const newOrder = async (req: Request, res: Response, next: NextFunction) 
 
             if (userEmail) {
                 const message = `Thank you for your order! \n\nOrder ID: ${order[0]._id} \nTransaction ID: ${paymentInfo.id} \nTotal: ₹${order[0].totalPrice}`;
-                
+
                 // Simple HTML Template
                 const html = `
                     <div style="font-family: Arial, sans-serif; padding: 20px;">
@@ -150,8 +150,8 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
         // Validation for Shipped status
         if (req.body.status === "Shipped") {
             if (!req.body.courierName || !req.body.trackingId) {
-                return res.status(400).json({ 
-                    error: "Courier Name and Tracking ID are required when marking as Shipped" 
+                return res.status(400).json({
+                    error: "Courier Name and Tracking ID are required when marking as Shipped"
                 });
             }
             order.courierName = req.body.courierName;
@@ -175,13 +175,13 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
 
         // Trigger Email Notification (Nodemailer) based on status
         if (req.body.status === 'Shipped' || req.body.status === 'Packing' || req.body.status === 'Delivered') {
-             try {
+            try {
                 // Populate user to get email
                 const fullOrder = await Order.findById(req.params.id).populate('user', 'name email');
-                
+
                 console.log(`DEBUG: ${req.body.status} Email Triggered for Order:`, req.params.id);
 
-                if(fullOrder && fullOrder.user) {
+                if (fullOrder && fullOrder.user) {
                     const userEmail = (fullOrder.user as any).email;
                     const userName = (fullOrder.user as any).name;
 
@@ -232,16 +232,16 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
                             </div>
                         `;
                     }
-                    
+
                     console.log(`DEBUG: Sending ${req.body.status} email to ${userEmail}`);
-                     await sendEmail({
+                    await sendEmail({
                         email: userEmail,
                         subject: subject,
                         message,
                         html
                     });
                 } else {
-                     console.error("DEBUG: Order or User not found during email trigger");
+                    console.error("DEBUG: Order or User not found during email trigger");
                 }
             } catch (error) {
                 console.error(`${req.body.status} email failed`, error);
@@ -295,7 +295,7 @@ export const getSingleOrder = async (req: Request, res: Response, next: NextFunc
 // Get logged in user orders
 export const myOrders = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        if(!(req as any).user || !(req as any).user.id) {
+        if (!(req as any).user || !(req as any).user.id) {
             return res.status(401).json({ error: "User not authenticated" });
         }
         const orders = await Order.find({ user: (req as any).user.id });

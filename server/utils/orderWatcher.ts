@@ -5,7 +5,7 @@ import Notification from '../models/Notification';
 export const initOrderWatcher = (io: Server) => {
     const changeStream = Order.watch([], { fullDocument: 'updateLookup' });
 
-    changeStream.on('change', async (change) => {
+    changeStream.on('change', async (change: any) => {
         if (change.operationType === 'insert') {
             const order: any = change.fullDocument;
 
@@ -65,7 +65,7 @@ export const initOrderWatcher = (io: Server) => {
         }
     });
 
-    changeStream.on('error', (error) => {
+    changeStream.on('error', (error: any) => {
         console.error("Order Watcher Error:", error);
     });
 };

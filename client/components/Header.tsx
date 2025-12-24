@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, ChevronDown, Menu, LogOut, Package } from 'lucide-react';
+import { Search, ShoppingCart, User, ChevronDown, Menu, LogOut, Package, Heart } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
@@ -196,6 +196,12 @@ export default function Header() {
                             Login
                         </Link>
                     )}
+
+                    {/* Wishlist */}
+                    <Link href="/wishlist" className="relative p-2 hover:bg-accent rounded-full transition-colors group">
+                        <Heart size={24} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                         {/* Optional Badge if we had count from Redux, but keeping clean for now or add later */}
+                    </Link>
 
                     {/* Cart */}
                     <Link href="/cart" className="relative p-2 hover:bg-accent rounded-full transition-colors group">

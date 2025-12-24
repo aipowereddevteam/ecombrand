@@ -51,7 +51,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
         isActive: true
     });
 
-    const categories = ['Men', 'Women', 'Kids', 'Home', 'Electronics', 'Sports'];
+    const categories = ['Men', 'Women', 'Kids', 'Home', 'GenZ'];
 
     useEffect(() => {
         const fetchProduct = async () => {

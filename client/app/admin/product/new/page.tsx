@@ -37,7 +37,7 @@ export default function AddProduct() {
         stock: { S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
     });
 
-    const categories = ['Men', 'Women', 'Kids', 'Home', 'Electronics', 'Sports'];
+    const categories = ['Men', 'Women', 'Kids', 'Home', 'GenZ'];
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;

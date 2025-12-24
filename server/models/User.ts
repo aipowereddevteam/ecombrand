@@ -7,7 +7,13 @@ export interface IUser extends Document {
     googleId?: string;
     phone?: string;
     role: 'user' | 'admin' | 'account_manager';
+    gender?: string;
+    dob?: Date;
+    location?: string;
+    alternateMobile?: string;
+    hintName?: string;
     isPhoneVerified: boolean;
+    wishlist: any[]; // Using any[] to avoid circular dependency types for now, or use mongoose.Types.ObjectId[]
     createdAt: Date;
     updatedAt: Date;
 }
@@ -34,6 +40,11 @@ const userSchema = new mongoose.Schema<IUser>({
         unique: true,
         sparse: true
     },
+    gender: { type: String },
+    dob: { type: Date },
+    location: { type: String },
+    alternateMobile: { type: String },
+    hintName: { type: String },
     role: {
         type: String,
         enum: ['user', 'admin', 'account_manager'],
@@ -42,7 +53,13 @@ const userSchema = new mongoose.Schema<IUser>({
     isPhoneVerified: {
         type: Boolean,
         default: false
-    }
+    },
+    wishlist: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product'
+        }
+    ]
 }, { timestamps: true });
 
 const User: Model<IUser> = mongoose.model<IUser>('User', userSchema);

@@ -29,13 +29,11 @@ export default function Home() {
     }, []);
 
     const categories = [
-        { name: 'Mobiles', icon: '📱' },
-        { name: 'Fashion', icon: '👕' },
-        { name: 'Electronics', icon: '💻' },
+        { name: 'Men', icon: '👕' },
+        { name: 'Women', icon: '👗' },
+        { name: 'Kids', icon: '🧸' },
         { name: 'Home', icon: '🏠' },
-        { name: 'Appliances', icon: '🧊' },
-        { name: 'Travel', icon: '✈️' },
-        { name: 'Toys', icon: '🧸' },
+        { name: 'Gen Z', icon: '🎒' },
     ];
 
     return (

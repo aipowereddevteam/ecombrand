@@ -1,7 +1,11 @@
 'use client';
-import { useEffect, useState, Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import axios from 'axios';
-import Link from 'next/link';
+import HeroCarousel from '@/components/home/HeroCarousel';
+import CategoryRail from '@/components/home/CategoryRail';
+import FeaturedGrid from '@/components/home/FeaturedGrid';
+import PromoStrip from '@/components/home/PromoStrip';
+import FashionProductCard from '@/components/home/FashionProductCard';
 import { useSearchParams } from 'next/navigation';
 
 interface Product {
@@ -9,56 +13,113 @@ interface Product {
     title: string;
     description: string;
     price: number;
+    category: string;
     images: { public_id: string; url: string }[];
 }
 
-function ProductList() {
+function HomeContent() {
     const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
     const searchParams = useSearchParams();
     const keyword = searchParams.get('keyword') || '';
+    const category = searchParams.get('category') || '';
 
     useEffect(() => {
         const fetchProducts = async () => {
+            setLoading(true);
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+                // Note: The backend search API might need tweaking to support category filtering nicely, 
+                // but for now we assume 'keyword' works or we fetch all and filter client side if needed, 
+                // or the backend handles ?keyword as general search.
+                // Let's assume we just fetch all or search.
                 const { data } = await axios.get(`${apiUrl}/products`, {
                     params: { keyword }
                 });
-                setProducts(data.products);
+                
+                let filtered = data.products;
+                if (category) {
+                     filtered = data.products.filter((p: Product) => p.category === category);
+                }
+                
+                setProducts(filtered);
             } catch (error) {
                 console.error("Error fetching products", error);
+            } finally {
+                setLoading(false);
             }
         };
         fetchProducts();
-    }, [keyword]);
-    
-    // ... rest of component logic related to rendering ...
-    
-    // BUT we need to return the JSX here, so I will rewrite the whole component to be safe or swap the internal logic.
-    // Given the structure, I'll rewrite the component to wrap the list in Suspense as required by useSearchParams in Next 15+ or generally good practice.
-    
+    }, [keyword, category]);
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.length > 0 ? products.map(product => (
-                <Link href={`/product/${product._id}`} key={product._id} className="border border-border p-4 hover:shadow-lg transition-all flex flex-col group cursor-pointer block bg-card rounded-xl hover:border-primary/50">
-                    <div className="h-48 w-full mb-4 flex items-center justify-center relative bg-muted/20 rounded-lg p-4">
-                        <img
-                            src={product.images && product.images[0] ? product.images[0].url : 'https://via.placeholder.com/150'}
-                            alt={product.title}
-                            className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform mix-blend-multiply dark:mix-blend-normal"
-                        />
+        <div className="space-y-8 pb-20 bg-white">
+            {/* 1. Hero Section */}
+            {!keyword && !category && <HeroCarousel />}
+
+            {/* 2. Category Quick Links */}
+            {!keyword && !category && <CategoryRail />}
+            
+            {/* 3. Promo Strip */}
+            {!keyword && !category && (
+                <PromoStrip 
+                    text="FLAT 10% OFF ON HDFC BANK CREDIT CARDS | USE CODE: HDFC10" 
+                    bgColor="bg-slate-900" 
+                    textColor="text-white"
+                />
+            )}
+
+            {/* 4. Shop by Category Grid */}
+            {!keyword && !category && <FeaturedGrid />}
+
+            {/* 5. Trending / Product List */}
+            <div className="max-w-7xl mx-auto px-4" id="products">
+                <div className="flex items-center justify-between mb-8 pt-8 border-t border-gray-100">
+                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
+                        {keyword ? `Search Results for "${keyword}"` : category ? `${category} Collection` : "Trending Now"}
+                     </h2>
+                     <span className="text-gray-500 text-sm hidden md:block">
+                        {products.length} Items Found
+                     </span>
+                </div>
+
+                {loading ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                            <div key={n} className="space-y-3">
+                                <div className="aspect-[3/4] bg-gray-200 rounded-lg animate-pulse" />
+                                <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
+                                <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
+                            </div>
+                        ))}
                     </div>
-                    <h3 className="font-medium text-foreground truncate mb-1" title={product.title}>{product.title}</h3>
-                    <div className="flex items-end gap-2 mb-1">
-                        <span className="font-bold text-lg text-foreground">₹{product.price}</span>
-                        <span className="text-muted-foreground line-through text-sm">₹{Math.round(product.price * 1.2)}</span>
-                        <span className="text-green-600 text-sm font-medium">20% off</span>
+                ) : products.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 gap-y-12">
+                        {products.map(product => (
+                            <FashionProductCard key={product._id} product={product} />
+                        ))}
                     </div>
-                    <span className="text-xs text-muted-foreground mb-2">Free delivery</span>
-                </Link>
-            )) : (
-                <div className="col-span-4 text-center py-10 text-muted-foreground">
-                    {keyword ? `No products found for "${keyword}"` : 'Loading products...'}
+                ) : (
+                     <div className="text-center py-20 bg-gray-50 rounded-lg">
+                        <p className="text-xl text-gray-500">No products found.</p>
+                        <button 
+                            onClick={() => window.location.href = '/'}
+                            className="mt-4 text-blue-600 font-medium hover:underline"
+                        >
+                            Back to Home
+                        </button>
+                    </div>
+                )}
+            </div>
+
+             {/* 6. Another Promo Strip */}
+             {!keyword && !category && (
+                <div className="mt-16">
+                     <PromoStrip 
+                        text="FREE SHIPPING ON ORDERS ABOVE ₹999 | EASY 30 DAY RETURNS" 
+                        bgColor="bg-gray-100" 
+                        textColor="text-gray-900"
+                    />
                 </div>
             )}
         </div>
@@ -66,54 +127,9 @@ function ProductList() {
 }
 
 export default function Home() {
-    const categories = [
-        { name: 'Mobiles', img: 'https://rukminim1.flixcart.com/flap/80/80/image/22fddf3c7da4c4f4.png' },
-        { name: 'Fashion', img: 'https://rukminim1.flixcart.com/fk-p-flap/80/80/image/0d75b34f7d8fbcb3.png' },
-        { name: 'Electronics', img: 'https://rukminim1.flixcart.com/flap/80/80/image/69c6589653afdb9a.png' },
-        { name: 'Home', img: 'https://rukminim1.flixcart.com/flap/80/80/image/ab7e2b022a4587dd.jpg' },
-        { name: 'Appliances', img: 'https://rukminim1.flixcart.com/flap/80/80/image/0ff199d1bd27eb98.png' },
-        { name: 'Travel', img: 'https://rukminim1.flixcart.com/flap/80/80/image/71050627a56cb900.png' },
-        { name: 'Toys', img: 'https://rukminim1.flixcart.com/flap/80/80/image/dff3f7adcf3a90c6.png' },
-    ];
-
     return (
-        <div className="min-h-screen bg-background pb-10">
-
-            {/* Categories Row */}
-            <div className="bg-card shadow-sm border-b border-border mb-4">
-                <div className="max-w-7xl mx-auto px-4 py-3 flex gap-4 md:gap-8 overflow-x-auto no-scrollbar">
-                    {categories.map((cat, i) => (
-                        <div key={i} className="flex flex-col items-center cursor-pointer min-w-[64px] group">
-                            <div className="h-16 w-16 mb-1 bg-muted rounded-full p-2">
-                                <img src={cat.img} alt={cat.name} className="h-full w-full object-contain mix-blend-multiply" />
-                            </div>
-                            <span className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">{cat.name}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Hero Banner (Static for now) */}
-            <div className="max-w-7xl mx-auto px-2 mb-4">
-                <div className="relative w-full h-48 md:h-72 bg-muted rounded-xl overflow-hidden">
-                    <img
-                        src="https://rukminim1.flixcart.com/fk-p-flap/1600/270/image/1e174e2d4d9b7100.jpg"
-                        alt="Banner"
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-            </div>
-
-            {/* Product Grid */}
-            <div className="max-w-7xl mx-auto px-2">
-                <div className="bg-card p-4 shadow-sm rounded-xl border border-border">
-                    <h2 className="text-xl font-bold mb-4 text-foreground">Suggested for You</h2>
-                    <Suspense fallback={<div>Loading Products...</div>}>
-                        <ProductList />
-                    </Suspense>
-                </div>
-            </div>
-
-        </div>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading Store...</div>}>
+            <HomeContent />
+        </Suspense>
     );
 }

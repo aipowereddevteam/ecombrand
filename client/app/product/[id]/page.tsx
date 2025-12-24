@@ -4,8 +4,11 @@ import { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/slices/cartSlice';
+import { toggleWishlist } from '@/redux/slices/wishlistSlice';
+import { RootState, AppDispatch } from '@/redux/store';
+import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { Star, ShoppingCart, Zap, Truck, ShieldCheck } from 'lucide-react';
+import { Star, ShoppingCart, Zap, Truck, ShieldCheck, Heart } from 'lucide-react';
 
 interface ProductDetail {
     _id: string;
@@ -24,8 +27,9 @@ export default function ProductDetails({ params }: { params: Promise<{ id: strin
     const [loading, setLoading] = useState(true);
     const [selectedSize, setSelectedSize] = useState('');
     const [quantity, setQuantity] = useState(1);
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
+    const wishlist = useSelector((state: RootState) => state.wishlist.items);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -103,7 +107,23 @@ export default function ProductDetails({ params }: { params: Promise<{ id: strin
                     {/* Details Section */}
                     <div className="flex flex-col justify-center">
                         <div className="mb-6 border-b pb-6">
-                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">{product.title}</h1>
+                            <div className="flex justify-between items-start gap-4">
+                                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">{product.title}</h1>
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const token = localStorage.getItem('token');
+                                        if (!token) {
+                                            alert("Please login to use wishlist");
+                                            return;
+                                        }
+                                        dispatch(toggleWishlist(product._id));
+                                    }}
+                                    className={`p-3 rounded-full shadow-sm border transition-colors ${wishlist.includes(product._id) ? 'bg-red-50 border-red-200 text-red-500' : 'bg-white border-gray-100 text-gray-400 hover:text-red-500'}`}
+                                >
+                                     <Heart size={24} fill={wishlist.includes(product._id) ? "currentColor" : "none"} />
+                                </button>
+                            </div>
                             <p className="text-sm text-gray-500 mb-4">Product ID: {product._id}</p>
 
                             <div className="flex items-center gap-4 mb-4">

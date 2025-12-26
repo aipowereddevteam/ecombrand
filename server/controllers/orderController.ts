@@ -298,7 +298,7 @@ export const myOrders = async (req: Request, res: Response, next: NextFunction) 
         if (!(req as any).user || !(req as any).user.id) {
             return res.status(401).json({ error: "User not authenticated" });
         }
-        const orders = await Order.find({ user: (req as any).user.id });
+        const orders = await Order.find({ user: (req as any).user.id }).sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -313,7 +313,7 @@ export const myOrders = async (req: Request, res: Response, next: NextFunction) 
 // Get All Orders (Admin)
 export const getAllOrders = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const orders = await Order.find();
+        const orders = await Order.find().sort({ createdAt: -1 });
 
         let totalAmount = 0;
         orders.forEach((order) => {

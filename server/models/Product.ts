@@ -18,6 +18,9 @@ export interface IProduct extends Document {
         XXL: number;
     } | undefined; // Using undefined check if not strictly required, but Schema has defaults so it will be there.
     isActive: boolean;
+    ratings: number;
+    numOfReviews: number;
+
     createdAt: Date;
     createdBy: mongoose.Types.ObjectId | IUser;
 }
@@ -76,6 +79,15 @@ const productSchema = new mongoose.Schema<IProduct>({
         type: Boolean,
         default: true
     },
+    ratings: {
+        type: Number,
+        default: 0
+    },
+    numOfReviews: {
+        type: Number,
+        default: 0
+    },
+
     createdAt: {
         type: Date,
         default: Date.now

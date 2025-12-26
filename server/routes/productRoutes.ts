@@ -6,7 +6,11 @@ import {
     getProductDetails,
     updateProduct,
     deleteProduct,
-    checkStock
+    checkStock,
+    createReview,
+    getProductReviews,
+    deleteReview,
+    getRelatedProducts
 } from '../controllers/productController';
 import { isAuthenticated, authorizeRoles } from '../middleware/auth';
 import multer from 'multer';
@@ -18,6 +22,26 @@ const upload = multer({ dest: 'tmp/uploads/' });
 router.get('/', getAllProducts);
 router.get('/:id/check-stock', checkStock);
 router.get('/:id', getProductDetails);
+router.get('/related/:id', getRelatedProducts);
+
+// Product Reviews
+router.post(
+    '/review',
+    isAuthenticated,
+    upload.array('media', 5),
+    createReview
+);
+
+router.get(
+    '/reviews/:id',
+    getProductReviews
+);
+
+router.delete(
+    '/reviews/:id',
+    isAuthenticated,
+    deleteReview
+);
 
 // Admin Routes
 router.post(

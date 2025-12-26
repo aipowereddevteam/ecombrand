@@ -5,6 +5,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { Package, Truck, Clock, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import ReviewModal from '@/components/ReviewModal';
 
 interface IOrder {
     _id: string;
@@ -27,6 +28,17 @@ export default function MyOrders() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState({ id: '', name: '', image: '', orderId: '' });
+
+
+    const openReviewModal = (productId: string, name: string, image: string, orderId: string) => {
+        setSelectedProduct({ id: productId, name, image, orderId });
+        setReviewModalOpen(true);
+    };
+
+
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -77,8 +89,12 @@ export default function MyOrders() {
         </div>
     );
 
+
+
+
+
     return (
-        <div>
+        <div className="relative">
             <h1 className="text-2xl font-bold text-gray-800 mb-8 pb-4 border-b border-gray-100">My Orders</h1>
 
             <div className="space-y-6">
@@ -122,8 +138,17 @@ export default function MyOrders() {
                                             <h3 className="font-bold text-gray-800 text-sm mb-1">{item.name}</h3>
                                             <p className="text-xs text-gray-500">Size: {item.size} <span className="mx-2">•</span> Qty: {item.quantity}</p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right flex flex-col items-end gap-2">
                                             <p className="font-bold text-gray-900 text-sm">₹{item.price}</p>
+
+                                            {order.orderStatus === 'Delivered' && (
+                                                <button
+                                                    onClick={() => openReviewModal(item.product, item.name, item.image, order._id)}
+                                                    className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                                                >
+                                                    Write Review
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -133,6 +158,23 @@ export default function MyOrders() {
                     </div>
                 ))}
             </div>
+
+            {/* Shared Review Modal */}
+            <ReviewModal
+                isOpen={reviewModalOpen}
+                onClose={() => setReviewModalOpen(false)}
+                product={{
+                    id: selectedProduct.id,
+                    name: selectedProduct.name,
+                    image: selectedProduct.image
+                }}
+                orderId={selectedProduct.orderId}
+                onSuccess={() => {
+                    // Maybe refresh orders if we want to update UI (hide Write Review button?)
+                    // For now just close
+                    setReviewModalOpen(false);
+                }}
+            />
         </div>
     );
 }

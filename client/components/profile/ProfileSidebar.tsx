@@ -28,17 +28,17 @@ export default function ProfileSidebar() {
                 </div>
 
                 {/* Credits */}
-                <div className="py-3 border-b border-gray-100">
+                {/* <div className="py-3 border-b border-gray-100">
                     <div className="px-6 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">CREDITS</div>
                     <div className="flex flex-col gap-1">
                         <Link href="#" className="block px-6 py-1 text-gray-600 hover:text-blue-600">Coupons</Link>
                         <Link href="#" className="block px-6 py-1 text-gray-600 hover:text-blue-600">Myntra Credit</Link>
                         <Link href="#" className="block px-6 py-1 text-gray-600 hover:text-blue-600">MynCash</Link>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Account */}
-                <div className="py-3 border-b border-gray-100">
+                {/* <div className="py-3 border-b border-gray-100">
                     <div className="px-6 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">ACCOUNT</div>
                     <div className="flex flex-col gap-1">
                         <Link href="/profile" className={isActive('/profile')}>Profile</Link>
@@ -49,7 +49,7 @@ export default function ProfileSidebar() {
                         <Link href="#" className="block px-6 py-1 text-gray-600 hover:text-blue-600">Myntra Insider</Link>
                         <Link href="#" className="block px-6 py-1 text-gray-600 hover:text-blue-600">Delete Account</Link>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Legal */}
                 <div className="py-3">

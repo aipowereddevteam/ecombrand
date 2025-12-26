@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
+
 import { motion } from 'framer-motion';
 
 interface Product {
@@ -14,15 +14,10 @@ interface Product {
 export default function FashionProductCard({ product }: { product: Product }) {
     const imageUrl = product.images && product.images[0] ? product.images[0].url : 'https://via.placeholder.com/400x600?text=No+Image';
 
-    const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        alert("Added to Cart!"); 
-        // Implement actual Add to Cart dispatch here if needed, keeping simple for now
-    };
+
 
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -32,25 +27,15 @@ export default function FashionProductCard({ product }: { product: Product }) {
             {/* Image Container with 3:4 Aspect Ratio */}
             <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
                 <Link href={`/product/${product._id}`} className="block h-full w-full">
-                    <img 
-                        src={imageUrl} 
-                        alt={product.title} 
+                    <img
+                        src={imageUrl}
+                        alt={product.title}
                         className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
                     />
                 </Link>
-                
+
                 {/* Hover Overlay / Glassmorphism actions - NOW OUTSIDE LINK */}
-                <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-10 pointer-events-none">
-                        <div className="flex gap-2 justify-center pointer-events-auto">
-                        <button 
-                            onClick={handleAddToCart}
-                            className="flex-1 bg-white/90 backdrop-blur-md text-gray-900 py-3 rounded-lg font-bold text-sm hover:bg-black hover:text-white transition-colors flex items-center justify-center gap-2 shadow-lg"
-                        >
-                            <ShoppingBag size={18} />
-                            Add to Cart
-                        </button>
-                        </div>
-                </div>
+
             </div>
 
             {/* Product Info */}

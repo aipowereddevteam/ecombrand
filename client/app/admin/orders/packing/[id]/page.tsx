@@ -35,9 +35,9 @@ export default function PackingSlip({ params }: { params: Promise<{ id: string }
 
     useEffect(() => {
         const fetchOrder = async () => {
-             // In a real app, this might rely on a token, but for printing we often want it accessible 
-             // or we assume the admin is already logged in and the token is in local storage.
-             // For simplicity, we use the same fetch method.
+            // In a real app, this might rely on a token, but for printing we often want it accessible 
+            // or we assume the admin is already logged in and the token is in local storage.
+            // For simplicity, we use the same fetch method.
             const token = localStorage.getItem('token');
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
             try {
@@ -61,13 +61,13 @@ export default function PackingSlip({ params }: { params: Promise<{ id: string }
         <div className="min-h-screen bg-white text-black p-8 font-mono print:p-0">
             {/* Print Controls */}
             <div className="mb-8 print:hidden flex justify-between items-center max-w-3xl mx-auto">
-                <button 
+                <button
                     onClick={() => window.print()}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700"
                 >
                     Print Packing Slip
                 </button>
-                <button 
+                <button
                     onClick={() => window.history.back()}
                     className="text-gray-600 hover:text-black"
                 >
@@ -77,7 +77,7 @@ export default function PackingSlip({ params }: { params: Promise<{ id: string }
 
             {/* Slip Content */}
             <div className="max-w-3xl mx-auto border-2 border-black p-8 print:border-0 print:w-full">
-                
+
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-6">
                     <div>
@@ -96,17 +96,17 @@ export default function PackingSlip({ params }: { params: Promise<{ id: string }
                 <div className="grid grid-cols-2 gap-8 mb-8">
                     <div>
                         <h3 className="font-bold border-b border-black mb-2 pb-1 block uppercase text-sm">Ship To</h3>
-                        <p className="font-bold text-lg">{order.user.name}</p>
+                        <p className="font-bold text-lg">{order.user?.name || 'Guest'}</p>
                         <p>{order.shippingInfo.address}</p>
                         <p>{order.shippingInfo.city}, {order.shippingInfo.state}</p>
                         <p>{order.shippingInfo.country} - {order.shippingInfo.pinCode}</p>
-                        <p className="mt-2 flex items-center gap-2"><Phone size={14}/> {order.shippingInfo.phoneNo}</p>
+                        <p className="mt-2 flex items-center gap-2"><Phone size={14} /> {order.shippingInfo.phoneNo}</p>
                     </div>
                     <div>
-                         <h3 className="font-bold border-b border-black mb-2 pb-1 block uppercase text-sm">Order Notes</h3>
-                         <div className="h-24 border border-black border-dashed rounded p-2 text-sm text-gray-400 italic">
-                             Scanner / Warehouse Notes
-                         </div>
+                        <h3 className="font-bold border-b border-black mb-2 pb-1 block uppercase text-sm">Order Notes</h3>
+                        <div className="h-24 border border-black border-dashed rounded p-2 text-sm text-gray-400 italic">
+                            Scanner / Warehouse Notes
+                        </div>
                     </div>
                 </div>
 

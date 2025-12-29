@@ -10,7 +10,13 @@ router.delete('/wishlist/:productId', isAuthenticated, removeFromWishlist);
 
 // Profile
 import { getUserProfile, updateUserProfile } from '../controllers/userController';
+import multer from 'multer';
+
+// Configure simple storage for multer (assuming controller handles Cloudinary upload)
+const upload = multer({ dest: 'tmp/uploads/' });
+
 router.get('/profile', isAuthenticated, getUserProfile);
-router.put('/profile', isAuthenticated, updateUserProfile);
+// Allow single file upload for 'avatar'
+router.put('/profile', isAuthenticated, upload.single('avatar'), updateUserProfile);
 
 export default router;

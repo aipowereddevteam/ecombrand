@@ -2,6 +2,7 @@
 import { useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
+import AdminSidebar from './admin/AdminSidebar';
 
 interface DecodedToken {
     role: string;
@@ -21,7 +22,8 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
 
         try {
             const decoded = jwtDecode<DecodedToken>(token);
-            if (decoded.role !== 'admin') {
+            const allowedRoles = ['admin', 'warehouse', 'accountant'];
+            if (!allowedRoles.includes(decoded.role)) {
                 router.push('/');
             } else {
                 setAuthorized(true);
@@ -36,5 +38,12 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
         return <div className="flex justify-center items-center h-screen">Loading Admin Access...</div>;
     }
 
-    return <>{children}</>;
+    return (
+        <div className="flex h-screen bg-gray-100 overflow-hidden">
+            <AdminSidebar />
+            <div className="flex-1 overflow-auto">
+                {children}
+            </div>
+        </div>
+    );
 }

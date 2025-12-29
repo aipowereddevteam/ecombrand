@@ -10,6 +10,8 @@ import paymentRoutes from './routes/paymentRoutes';
 import orderRoutes from './routes/orderRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import userRoutes from './routes/userRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
+import adminRoutes from './routes/adminRoutes';
 import passport from './config/passport';
 import { initOrderWatcher } from './utils/orderWatcher';
 
@@ -43,6 +45,8 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/admin/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 app.get('/', (req: Request, res: Response) => {

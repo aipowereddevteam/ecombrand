@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
-import { Edit2, Check, X } from 'lucide-react';
+import { Edit2, Check, X, Shield } from 'lucide-react';
 
 interface UserProfile {
     _id: string;
@@ -25,7 +25,7 @@ export default function ProfilePage() {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
-    
+
     // Form State
     const [formData, setFormData] = useState<Partial<UserProfile>>({});
 
@@ -64,16 +64,38 @@ export default function ProfilePage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setSelectedFile(file);
+            setPreviewImage(URL.createObjectURL(file));
+        }
+    };
+
     const handleSave = async () => {
         try {
             const token = localStorage.getItem('token');
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-            
-            const { data } = await axios.put(`${apiUrl}/user/profile`, formData, {
-                headers: { Authorization: `Bearer ${token}` }
+
+            const data = new FormData();
+            Object.keys(formData).forEach(key => {
+                if ((formData as any)[key]) data.append(key, (formData as any)[key]);
             });
-            
-            setUser(data.user);
+            if (selectedFile) {
+                data.append('avatar', selectedFile);
+            }
+
+            const response = await axios.put(`${apiUrl}/user/profile`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setUser(response.data.user);
             setIsEditing(false);
             alert("Profile Updated Successfully!");
         } catch (error) {
@@ -84,6 +106,8 @@ export default function ProfilePage() {
 
     const handleCancel = () => {
         setFormData(user || {});
+        setSelectedFile(null);
+        setPreviewImage(null);
         setIsEditing(false);
     };
 
@@ -93,19 +117,61 @@ export default function ProfilePage() {
 
     if (!user) return null;
 
+    // Helper to get badge styling
+    const getRoleBadge = (role: string) => {
+        switch (role) {
+            case 'admin': return { label: 'Admin Account', color: 'text-purple-600 bg-purple-50' };
+            case 'warehouse': return { label: 'Warehouse Staff', color: 'text-orange-600 bg-orange-50' };
+            case 'accountant': return { label: 'Accountant', color: 'text-green-600 bg-green-50' };
+            case 'account_manager': return { label: 'Account Manager', color: 'text-blue-600 bg-blue-50' };
+            default: return null;
+        }
+    };
+
+    const roleInfo = getRoleBadge(user.role);
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-8 border-b pb-4">
-                    <h2 className="text-xl font-bold text-gray-800">Profile Details</h2>
-                    {!isEditing && (
-                        <button onClick={() => setIsEditing(true)} className="text-sm font-bold text-pink-500 hover:text-pink-600 uppercase">
-                            Edit Details
-                        </button>
+            <div className="mb-8 border-b pb-6 flex flex-col md:flex-row items-center gap-6">
+                <div className="relative group">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-100 shadow-sm">
+                        <img
+                            src={previewImage || user.avatar || "https://via.placeholder.com/150"}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                    {isEditing && (
+                        <label className="absolute bottom-0 right-0 bg-pink-500 text-white p-1.5 rounded-full cursor-pointer hover:bg-pink-600 transition-colors shadow-sm">
+                            <Edit2 size={14} />
+                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                        </label>
                     )}
+                </div>
+
+                <div className="flex-1 text-center md:text-left">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">{user.name}</h1>
+
+                    {roleInfo && (
+                        <div className={`flex items-center gap-1 text-xs font-semibold ${roleInfo.color} px-2 py-0.5 rounded-md w-fit mb-4 mx-auto md:mx-0`}>
+                            <Shield size={12} fill="currentColor" />
+                            <span>{roleInfo.label}</span>
+                        </div>
+                    )}
+
+                    {/* Header Text or just edit button? User asked to remove 'Profile Details' text. */}
+                    {!isEditing ? (
+                        <button onClick={() => setIsEditing(true)} className="text-sm font-bold text-pink-500 hover:text-pink-600 uppercase border border-pink-500 px-6 py-2 rounded-sm transition-colors">
+                            Edit Profile
+                        </button>
+                    ) : (
+                        <span className="text-sm text-gray-400 italic">Update your photo and details below</span>
+                    )}
+                </div>
             </div>
 
             <div className="space-y-6 max-w-2xl">
-                
+
                 {/* Full Name */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                     <label className="text-sm text-gray-500 font-medium">Full Name</label>
@@ -181,8 +247,8 @@ export default function ProfilePage() {
                     )}
                 </div>
 
-                    {/* Hint Name */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                {/* Hint Name */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                     <label className="text-sm text-gray-500 font-medium">Hint Name</label>
                     {isEditing ? (
                         <input type="text" name="hintName" value={formData.hintName || ''} onChange={handleInputChange} className="md:col-span-2 border p-2 rounded" />

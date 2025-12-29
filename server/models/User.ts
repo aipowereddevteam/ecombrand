@@ -6,13 +6,15 @@ export interface IUser extends Document {
     avatar?: string;
     googleId?: string;
     phone?: string;
-    role: 'user' | 'admin' | 'account_manager';
+    role: 'user' | 'admin' | 'account_manager' | 'warehouse' | 'accountant';
     gender?: string;
     dob?: Date;
     location?: string;
     alternateMobile?: string;
     hintName?: string;
     isPhoneVerified: boolean;
+    permissions?: string[];
+    assignedModules?: string[];
     wishlist: any[]; // Using any[] to avoid circular dependency types for now, or use mongoose.Types.ObjectId[]
     createdAt: Date;
     updatedAt: Date;
@@ -47,12 +49,19 @@ const userSchema = new mongoose.Schema<IUser>({
     hintName: { type: String },
     role: {
         type: String,
-        enum: ['user', 'admin', 'account_manager'],
+        enum: ['user', 'admin', 'account_manager', 'warehouse', 'accountant'],
         default: 'user'
     },
     isPhoneVerified: {
         type: Boolean,
         default: false
+    },
+    permissions: [{
+        type: String
+    }],
+    assignedModules: {
+        type: [String],
+        default: []
     },
     wishlist: [
         {

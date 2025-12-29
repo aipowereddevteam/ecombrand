@@ -77,6 +77,9 @@ export const getUserProfile = async (req: Request, res: Response) => {
 };
 
 // Update Profile
+import cloudinary from '../utils/cloudinary';
+import fs from 'fs';
+
 export const updateUserProfile = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
@@ -86,13 +89,32 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         if (name) user.name = name;
-        if (email) user.email = email; // Note: Email updates might require re-verification in robust apps
+        if (email) user.email = email;
         if (phone) user.phone = phone;
         if (gender) user.gender = gender;
         if (dob) user.dob = dob;
         if (location) user.location = location;
         if (alternateMobile) user.alternateMobile = alternateMobile;
         if (hintName) user.hintName = hintName;
+
+        // Handle Avatar Upload
+        if (req.file) {
+            try {
+                const result = await cloudinary.uploader.upload(req.file.path, {
+                    folder: 'avatars',
+                    width: 150,
+                    crop: 'scale',
+                });
+                user.avatar = result.secure_url;
+
+                // Clean up local file
+                fs.unlinkSync(req.file.path);
+            } catch (uploadError) {
+                console.error("Cloudinary Upload Error", uploadError);
+                // Continue saving other details even if image fails, or throw?
+                // For now, log and continue, but ideally warn user.
+            }
+        }
 
         await user.save();
 

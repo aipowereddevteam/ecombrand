@@ -8,11 +8,11 @@ router.post('/new', isAuthenticated, ensurePhoneVerified, newOrder);
 router.get('/me', isAuthenticated, myOrders);
 router.get('/:id', isAuthenticated, getSingleOrder);
 
-// Admin Routes
+// Admin Routes (and Warehouse for specific actions)
 router.route('/admin/order/:id')
-    .put(isAuthenticated, authorizeRoles('admin'), updateOrderStatus)
+    .put(isAuthenticated, authorizeRoles('admin', 'warehouse'), updateOrderStatus)
     .delete(isAuthenticated, authorizeRoles('admin'), deleteOrder);
 
-router.route('/admin/orders').get(isAuthenticated, authorizeRoles('admin'), getAllOrders);
+router.route('/admin/orders').get(isAuthenticated, authorizeRoles('admin', 'warehouse', 'accountant'), getAllOrders);
 
 export default router;

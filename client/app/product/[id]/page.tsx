@@ -14,13 +14,14 @@ import MediaLightbox from '@/components/MediaLightbox';
 import ReviewCard from '@/components/ReviewCard';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import ProductGallery from '@/components/ProductGallery';
 
 interface ProductDetail {
     _id: string;
     title: string;
     description: string;
     price: number;
-    images: { public_id: string; url: string }[];
+    images: { public_id: string; url: string; type?: string }[];
     stock: { [key: string]: number };
     ratings: number;
     numOfReviews: number;
@@ -179,22 +180,13 @@ export default function ProductDetails({ params }: { params: Promise<{ id: strin
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 relative">
 
                     {/* Left Column: Staggered Image Grid (Cols 1-7) */}
+                    {/* Left Column: Product Gallery (Cols 1-7) */}
                     <div className="lg:col-span-7">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {product.images && product.images.length > 0 ? (
-                                product.images.map((img, idx) => (
-                                    <div key={idx} className={`relative overflow-hidden group w-full ${idx === 0 || (idx + 1) % 3 === 0 ? 'md:col-span-2 aspect-[4/5]' : 'aspect-[3/4]'}`}>
-                                        <img
-                                            src={img.url}
-                                            alt={`${product.title} - view ${idx + 1}`}
-                                            className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110 cursor-zoom-in"
-                                        />
-                                    </div>
-                                ))
-                            ) : (
-                                <img src="https://via.placeholder.com/800x1000" alt="Placeholder" className="w-full col-span-2" />
-                            )}
-                        </div>
+                        {product.images && product.images.length > 0 ? (
+                            <ProductGallery images={product.images} title={product.title} />
+                        ) : (
+                            <img src="https://via.placeholder.com/800x1000" alt="Placeholder" className="w-full" />
+                        )}
                     </div>
 
                     {/* Right Column: Sticky Details (Cols 8-12) */}
@@ -357,7 +349,7 @@ export default function ProductDetails({ params }: { params: Promise<{ id: strin
                 {relatedProducts.length > 0 && (
                     <div className="mt-20 py-12 border-t border-gray-100">
                         <div className="flex items-center justify-between mb-8">
-                            <h2 className="font-serif text-3xl text-gray-900">Complete the Look</h2>
+                            <h2 className="font-serif text-3xl text-gray-900">Related Products</h2>
                             <Link href="/products" className="text-sm border-b border-black pb-0.5 hover:opacity-70 transition-opacity">View All</Link>
                         </div>
 

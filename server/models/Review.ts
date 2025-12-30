@@ -62,7 +62,7 @@ reviewSchema.statics.calcAverageRatings = async function (productId: string) {
     try {
         const stats = await this.aggregate([
             {
-                $match: { product: new mongoose.Types.ObjectId(productId) }
+                $match: { product: new (mongoose.Types.ObjectId as any)(productId) }
             },
             {
                 $group: {

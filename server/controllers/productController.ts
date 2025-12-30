@@ -29,13 +29,16 @@ export const createProduct = async (req: Request, res: Response) => {
         const imagesLinks = [];
 
         for (const file of imageFiles) {
+            const isVideo = file.mimetype.startsWith('video');
             const result = await cloudinary.uploader.upload(file.path, {
-                folder: 'ecom_products'
+                folder: 'ecom_products',
+                resource_type: isVideo ? 'video' : 'image'
             });
 
             imagesLinks.push({
                 public_id: result.public_id,
-                url: result.secure_url
+                url: result.secure_url,
+                type: isVideo ? 'video' : 'image'
             });
 
             // Clean up local file after upload
@@ -72,10 +75,15 @@ export const createProduct = async (req: Request, res: Response) => {
         if (req.files) {
             const files = req.files as unknown as MulterFile[];
             files.forEach(file => {
-                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                try {
+                    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                } catch (e) {
+                    console.error("Error deleting file:", file.path);
+                }
             });
         }
-        res.status(500).json({ error: 'Server Error' });
+        const statusCode = (error as any).http_code || 500;
+        res.status(statusCode).json({ error: (error as any).message || 'Server Error' });
     }
 };
 
@@ -236,13 +244,16 @@ export const updateProduct = async (req: Request, res: Response) => {
         if (req.files && (req.files as unknown as MulterFile[]).length > 0) {
             const imageFiles = req.files as unknown as MulterFile[];
             for (const file of imageFiles) {
+                const isVideo = file.mimetype.startsWith('video');
                 const result = await cloudinary.uploader.upload(file.path, {
-                    folder: 'ecom_products'
+                    folder: 'ecom_products',
+                    resource_type: isVideo ? 'video' : 'image'
                 });
 
                 product.images.push({
                     public_id: result.public_id,
-                    url: result.secure_url
+                    url: result.secure_url,
+                    type: isVideo ? 'video' : 'image'
                 });
 
                 fs.unlinkSync(file.path);
@@ -267,10 +278,15 @@ export const updateProduct = async (req: Request, res: Response) => {
         if (req.files) {
             const files = req.files as unknown as MulterFile[];
             files.forEach(file => {
-                if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                try {
+                    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+                } catch (e) {
+                    console.error("Error deleting file:", file.path);
+                }
             });
         }
-        res.status(500).json({ error: 'Server Error' });
+        const statusCode = (error as any).http_code || 500;
+        res.status(statusCode).json({ error: (error as any).message || 'Server Error' });
     }
 };
 

@@ -1,8 +1,9 @@
 'use client';
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import AdminRoute from '@/components/AdminRoute';
+import UploadProgressModal from '@/components/UploadProgressModal';
 
 interface IFormData {
     title: string;
@@ -22,6 +23,7 @@ interface IFormData {
 export default function AddProduct() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     
     // Image State
     const [previews, setPreviews] = useState<string[]>([]);
@@ -91,6 +93,7 @@ export default function AddProduct() {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
+        setUploadProgress(0);
 
         try {
             const data = new FormData();
@@ -109,11 +112,22 @@ export default function AddProduct() {
 
             await axios.post(`${apiUrl}/products/admin/new`, data, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    // 'Content-Type': 'multipart/form-data', // Let browser set boundary
                     'Authorization': `Bearer ${token}`
+                },
+                onUploadProgress: (progressEvent) => {
+                    const total = progressEvent.total || 1;
+                    const percent = Math.round((progressEvent.loaded * 100) / total);
+                    // Only update if genuine progress is faster than simulation
+                    setUploadProgress(prev => Math.max(prev, percent));
                 }
             });
 
+            // Force 100% just before success if not reached
+            setUploadProgress(100);
+            
+            // Small delay to allow UI to render 100% before alert
+            await new Promise(resolve => setTimeout(resolve, 500));
             alert('Product Created Successfully!');
             router.push('/admin/dashboard');
         } catch (error: any) {
@@ -121,11 +135,28 @@ export default function AddProduct() {
             alert(error.response?.data?.error || 'Error creating product');
         } finally {
             setLoading(false);
+            setUploadProgress(0);
         }
     };
 
+    // Simulated progress to give immediate feedback
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (loading && uploadProgress < 90) {
+            interval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 90) return prev;
+                    // Slow increment
+                    return prev + 5;
+                });
+            }, 500);
+        }
+        return () => clearInterval(interval);
+    }, [loading, uploadProgress]);
+
     return (
         <AdminRoute>
+            {loading && <UploadProgressModal progress={uploadProgress} />}
             <div className="min-h-screen bg-gray-100 p-8">
                 <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md relative">
                     <h1 className="text-2xl font-bold mb-6 text-gray-800">Add New Product</h1>
@@ -203,26 +234,57 @@ export default function AddProduct() {
 
                         {/* Images */}
                         <div>
-                            <label className="block text-gray-700 font-medium mb-2">Product Images</label>
+                            <label className="block text-gray-700 font-medium mb-2">Product Media (Images & Videos)</label>
                             <input
                                 type="file"
                                 multiple
-                                accept="image/*"
-                                onChange={handleFileChange}
+                                accept="image/*,video/*"
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        const selectedFiles = Array.from(e.target.files);
+                                        const validFiles: File[] = [];
+                                        
+                                        selectedFiles.forEach(file => {
+                                            if (file.type.startsWith('video')) {
+                                                if (file.size > 10 * 1024 * 1024) {
+                                                    alert(`Video "${file.name}" is too large. Max size is 10MB.`);
+                                                    return;
+                                                }
+                                            }
+                                            validFiles.push(file);
+                                        });
+
+                                        if (validFiles.length > 0) {
+                                            setFiles([...files, ...validFiles]);
+                                            const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+                                            setPreviews([...previews, ...newPreviews]);
+                                        }
+                                    }
+                                }}
                                 className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             />
+                            <p className="text-sm text-gray-500 mt-1">Max video size: 10MB. Formats: MP4, WebM, etc.</p>
 
                             {/* Previews */}
                             <div className="flex gap-2 mt-4 overflow-x-auto">
-                                {previews.map((src, i) => (
-                                    <div 
-                                        key={i} 
-                                        className="relative cursor-pointer group hover:opacity-80"
-                                        onClick={() => handleImageClick(src)}
-                                    >
-                                        <img src={src} alt="Preview" className="h-20 w-20 object-cover rounded border" />
-                                    </div>
-                                ))}
+                                {previews.map((src, i) => {
+                                    const file = files[i];
+                                    const isVideo = file && file.type.startsWith('video');
+
+                                    return (
+                                        <div 
+                                            key={i} 
+                                            className="relative cursor-pointer group hover:opacity-80"
+                                            onClick={() => handleImageClick(src)}
+                                        >
+                                            {isVideo ? (
+                                                <video src={src} className="h-20 w-20 object-cover rounded border" />
+                                            ) : (
+                                                <img src={src} alt="Preview" className="h-20 w-20 object-cover rounded border" />
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -247,11 +309,19 @@ export default function AddProduct() {
                                     &times;
                                 </button>
 
-                                <img
-                                    src={modalImage}
-                                    alt="Full Size"
-                                    className="max-w-full max-h-[70vh] object-contain mx-auto mb-4"
-                                />
+                                {files.find(f => URL.createObjectURL(f) === modalImage)?.type.startsWith('video') ? (
+                                    <video
+                                        src={modalImage}
+                                        controls
+                                        className="max-w-full max-h-[70vh] object-contain mx-auto mb-4"
+                                    />
+                                ) : (
+                                    <img
+                                        src={modalImage}
+                                        alt="Full Size"
+                                        className="max-w-full max-h-[70vh] object-contain mx-auto mb-4"
+                                    />
+                                )}
 
                                 <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
                                     <div className="text-sm text-gray-500">

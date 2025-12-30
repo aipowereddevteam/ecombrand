@@ -3,6 +3,7 @@ import { useState, useEffect, ChangeEvent, FormEvent, use } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import AdminRoute from '@/components/AdminRoute';
+import UploadProgressModal from '@/components/UploadProgressModal';
 
 interface IFormData {
     title: string;
@@ -20,9 +21,10 @@ interface IFormData {
     isActive: boolean;
 }
 
-interface IImage {
+    interface IImage {
     public_id: string;
     url: string;
+    type?: string;
 }
 
 export default function EditProduct({ params }: { params: Promise<{ id: string }> }) {
@@ -31,6 +33,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
 
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     // State for Images
     const [existingImages, setExistingImages] = useState<IImage[]>([]);
@@ -101,10 +104,23 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const selectedFiles = Array.from(e.target.files);
-            setNewFiles([...newFiles, ...selectedFiles]);
+            const validFiles: File[] = [];
 
-            const previews = selectedFiles.map(file => URL.createObjectURL(file));
-            setNewPreviews([...newPreviews, ...previews]);
+            selectedFiles.forEach(file => {
+                if (file.type.startsWith('video')) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert(`Video "${file.name}" is too large. Max size is 10MB.`);
+                        return;
+                    }
+                }
+                validFiles.push(file);
+            });
+
+            if (validFiles.length > 0) {
+                setNewFiles([...newFiles, ...validFiles]);
+                const previews = validFiles.map(file => URL.createObjectURL(file));
+                setNewPreviews([...newPreviews, ...previews]);
+            }
         }
     };
 
@@ -130,6 +146,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
+        setUploadProgress(0);
 
         try {
             const data = new FormData();
@@ -156,6 +173,11 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`
+                },
+                onUploadProgress: (progressEvent) => {
+                    const total = progressEvent.total || 1;
+                    const percent = Math.round((progressEvent.loaded * 100) / total);
+                    setUploadProgress(percent);
                 }
             });
 
@@ -166,6 +188,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
             alert(error.response?.data?.error || 'Error updating product');
         } finally {
             setLoading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -173,6 +196,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
 
     return (
         <AdminRoute>
+            {loading && <UploadProgressModal progress={uploadProgress} />}
             <div className="min-h-screen bg-gray-100 p-8">
                 <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md relative">
                     <h1 className="text-2xl font-bold mb-6 text-gray-800">Edit Product</h1>
@@ -262,7 +286,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
 
                         {/* Images Management */}
                         <div>
-                            <label className="block text-gray-700 font-medium mb-2">Current Images (Click to View/Delete)</label>
+                            <label className="block text-gray-700 font-medium mb-2">Current Media (Images & Videos)</label>
                             <div className="flex gap-2 mb-4 overflow-x-auto">
                                 {existingImages.map((img) => (
                                     <div
@@ -270,27 +294,37 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
                                         className="relative cursor-pointer group"
                                         onClick={() => handleImageClick(img)}
                                     >
-                                        <img src={img.url} alt="Product" className="h-20 w-20 object-cover rounded border hover:opacity-75" />
+                                        {img.type === 'video' ? (
+                                            <video src={img.url} className="h-20 w-20 object-cover rounded border hover:opacity-75" />
+                                        ) : (
+                                            <img src={img.url} alt="Product" className="h-20 w-20 object-cover rounded border hover:opacity-75" />
+                                        )}
                                     </div>
                                 ))}
-                                {existingImages.length === 0 && <span className="text-sm text-gray-400">No images (or all deleted)</span>}
+                                {existingImages.length === 0 && <span className="text-sm text-gray-400">No media</span>}
                             </div>
 
-                            <label className="block text-gray-700 font-medium mb-2">Upload New Images</label>
+                            <label className="block text-gray-700 font-medium mb-2">Upload New Media</label>
                             <input
                                 type="file"
                                 multiple
-                                accept="image/*"
+                                accept="image/*,video/*"
                                 onChange={handleFileChange}
                                 className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             />
+                            <p className="text-sm text-gray-500 mt-1">Max video size: 10MB. Formats: MP4, WebM, etc.</p>
 
                             {/* New Previews */}
                             {newPreviews.length > 0 && (
                                 <div className="flex gap-2 mt-4 overflow-x-auto">
-                                    {newPreviews.map((src, i) => (
-                                        <img key={i} src={src} alt="New Preview" className="h-20 w-20 object-cover rounded border border-blue-300" />
-                                    ))}
+                                    {newPreviews.map((src, i) => {
+                                        const file = newFiles[i];
+                                        const isVideo = file && file.type.startsWith('video');
+                                        return (isVideo ? 
+                                            <video key={i} src={src} className="h-20 w-20 object-cover rounded border border-blue-300" /> :
+                                            <img key={i} src={src} alt="New Preview" className="h-20 w-20 object-cover rounded border border-blue-300" />
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -305,7 +339,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
                         </button>
                     </form>
 
-                    {/* Image Modal */}
+                    {/* Image/Video Modal */}
                     {modalImage && (
                         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={closeModal}>
                             <div className="bg-white p-4 rounded-lg max-w-4xl max-h-[90vh] overflow-auto relative" onClick={(e) => e.stopPropagation()}>
@@ -316,22 +350,30 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
                                     &times;
                                 </button>
 
-                                <img
-                                    src={modalImage.url}
-                                    alt="Full Size"
-                                    className="max-w-full max-h-[70vh] object-contain mx-auto mb-4"
-                                />
+                                {modalImage.type === 'video' ? (
+                                    <video
+                                        src={modalImage.url}
+                                        controls
+                                        className="max-w-full max-h-[70vh] object-contain mx-auto mb-4"
+                                    />
+                                ) : (
+                                    <img
+                                        src={modalImage.url}
+                                        alt="Full Size"
+                                        className="max-w-full max-h-[70vh] object-contain mx-auto mb-4"
+                                    />
+                                )}
 
                                 <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
                                     <div>
-                                        <p className="font-medium text-gray-700">Image Actions</p>
+                                        <p className="font-medium text-gray-700">Media Actions</p>
                                         <p className="text-xs text-gray-500">Public ID: {modalImage.public_id}</p>
                                     </div>
                                     <button
                                         onClick={handleDeleteFromModal}
                                         className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-medium"
                                     >
-                                        Delete Image
+                                        Delete Media
                                     </button>
                                 </div>
                             </div>

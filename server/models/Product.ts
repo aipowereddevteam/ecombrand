@@ -9,6 +9,7 @@ export interface IProduct extends Document {
     images: {
         public_id: string;
         url: string;
+        type?: string; 
     }[];
     stock: {
         S: number;
@@ -65,6 +66,10 @@ const productSchema = new mongoose.Schema<IProduct>({
             url: {
                 type: String,
                 required: true
+            },
+            type: {
+                type: String,
+                default: 'image' // 'image' or 'video'
             }
         }
     ],

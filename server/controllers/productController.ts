@@ -5,6 +5,7 @@ import Review from '../models/Review';
 import Order from '../models/Order';
 import cloudinary from '../utils/cloudinary';
 import fs from 'fs';
+import redis from '../utils/redis';
 
 // Helper to define file type since Multer types might be tricky with implicit req
 interface MulterFile {
@@ -14,6 +15,24 @@ interface MulterFile {
     mimetype: string;
     size: number;
 }
+
+// Helper: Fail-Safe Cache Invalidation
+const invalidateProductCache = async (productId: string) => {
+    try {
+        // 1. Invalidate Single Product Cache
+        await redis.del(`product:${productId}`);
+
+        // 2. Invalidate All Product Lists
+        const keys = await redis.keys('products:all:*');
+        if (keys.length > 0) {
+            await redis.del(...keys);
+        }
+        console.log(`Cache invalidated for product ${productId} and lists.`);
+    } catch (e) {
+        // Log error but DO NOT throw. Cache failure should not break the app.
+        console.error("Cache Invalidation Failed:", e);
+    }
+};
 
 // Create Product -- Admin
 export const createProduct = async (req: Request, res: Response) => {
@@ -65,6 +84,9 @@ export const createProduct = async (req: Request, res: Response) => {
             createdBy: (req as any).user.id // user attached by auth middleware
         });
 
+        // Invalidate Cache (Safe)
+        await invalidateProductCache(product._id.toString());
+
         res.status(201).json({
             success: true,
             product
@@ -92,6 +114,14 @@ export const getAllProducts = async (req: Request, res: Response) => {
     try {
         const { keyword } = req.query;
 
+        // Cache Key based on query params to handle search/sort permutations
+        const cacheKey = `products:all:${JSON.stringify(req.query)}`;
+        const cachedProducts = await redis.get(cacheKey);
+
+        if (cachedProducts) {
+             return res.status(200).json(JSON.parse(cachedProducts));
+        }
+
         let query: any = { isActive: true };
 
         if (keyword) {
@@ -102,6 +132,10 @@ export const getAllProducts = async (req: Request, res: Response) => {
         }
 
         const products = await Product.find(query).sort({ createdAt: -1 });
+
+        // Cache for 60 seconds
+        await redis.set(cacheKey, JSON.stringify({ success: true, products }), 'EX', 60);
+
         res.status(200).json({
             success: true,
             products
@@ -127,7 +161,18 @@ export const getAdminProducts = async (req: Request, res: Response) => {
 // Get Product Details
 export const getProductDetails = async (req: Request, res: Response) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const { id } = req.params;
+        const cacheKey = `product:${id}`;
+
+        // 1. Check Redis Cache
+        const cachedProduct = await redis.get(cacheKey);
+
+        if (cachedProduct) {
+            // Return cached data
+            return res.status(200).json(JSON.parse(cachedProduct));
+        }
+
+        const product = await Product.findById(id);
 
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
@@ -156,11 +201,16 @@ export const getProductDetails = async (req: Request, res: Response) => {
             }
         });
 
-        res.status(200).json({
+        const responseData = {
             success: true,
             product,
             distribution
-        });
+        };
+
+        // 2. Set Cache (60 seconds)
+        await redis.set(cacheKey, JSON.stringify(responseData), 'EX', 60);
+
+        res.status(200).json(responseData);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server Error' });
@@ -175,10 +225,19 @@ export const getRelatedProducts = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Product not found' });
         }
 
+        const cacheKey = `product:related:${req.params.id}`;
+        const cachedRelated = await redis.get(cacheKey);
+
+        if (cachedRelated) {
+            return res.status(200).json(JSON.parse(cachedRelated));
+        }
+
         const relatedProducts = await Product.find({
             category: product.category,
             _id: { $ne: product._id }
         }).limit(8);
+
+        await redis.set(cacheKey, JSON.stringify({ success: true, products: relatedProducts }), 'EX', 60);
 
         res.status(200).json({
             success: true,
@@ -268,6 +327,9 @@ export const updateProduct = async (req: Request, res: Response) => {
 
         await product.save();
 
+        // Invalidate Cache (Safe)
+        await invalidateProductCache(req.params.id);
+
         res.status(200).json({
             success: true,
             product
@@ -293,23 +355,23 @@ export const updateProduct = async (req: Request, res: Response) => {
 // Delete Product (Soft Delete) -- Admin
 export const deleteProduct = async (req: Request, res: Response) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findByIdAndUpdate(req.params.id, { isActive: false });
 
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
         }
 
-        // Soft Delete
-        product.isActive = false;
-        await product.save();
+        // Invalidate Cache (Safe)
+        await invalidateProductCache(req.params.id);
 
         res.status(200).json({
             success: true,
             message: 'Product deactivated successfully'
         });
 
-    } catch (error) {
-        res.status(500).json({ error: 'Server Error' });
+    } catch (error: any) {
+        console.error("Delete Product Error:", error);
+        res.status(500).json({ error: error.message || 'Server Error' });
     }
 };
 
@@ -323,10 +385,10 @@ export const checkStock = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Size parameter is required' });
         }
 
-        const product = await Product.findById(id);
+        const product = await Product.findOne({ _id: id, isActive: true });
 
         if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(404).json({ error: 'Product not found or unavailable' });
         }
 
         // Check stock for specific size

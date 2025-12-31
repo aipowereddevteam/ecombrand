@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { removeItemsFromCart, addToCart, ICartItem } from '@/redux/slices/cartSlice';
@@ -17,6 +18,22 @@ export default function CartPage() {
     const { cartItems } = useSelector((state: RootState) => state.cart);
     const dispatch = useDispatch();
     const router = useRouter();
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    const [error, setError] = React.useState<string | null>(null);
+
+    // clear error when cart changes
+    React.useEffect(() => {
+        setError(null);
+    }, [cartItems]);
+
+    if (!isMounted) {
+        return <div className="min-h-[60vh] flex flex-col items-center justify-center text-muted-foreground">Loading...</div>;
+    }
 
     const increaseQuantity = (item: ICartItem) => {
         const newQty = item.quantity + 1;
@@ -34,7 +51,7 @@ export default function CartPage() {
         dispatch(removeItemsFromCart({ product: item.product, size: item.size }));
     };
 
-    const checkoutHandler = () => {
+    const checkoutHandler = async () => {
         // Check if user is logged in
         const token = localStorage.getItem('token');
         if (!token) {
@@ -48,6 +65,26 @@ export default function CartPage() {
                 router.push('/verify-phone');
                 return;
             }
+
+            // Validate Cart Items (Check Stock & Active Status)
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            for (const item of cartItems) {
+                try {
+                    // Route: /api/products/:id/check-stock
+                    const res = await fetch(`${apiUrl}/products/${item.product}/check-stock?size=${item.size}`);
+                    const data = await res.json();
+                    
+                    if (!res.ok) {
+                        setError(`Item "${item.name}" is unavailable: ${data.error || 'Out of Stock'}`);
+                        return; // Stop Checkout
+                    }
+                } catch (err) {
+                    console.error("Stock check failed", err);
+                    setError("Could not verify stock. Please try again.");
+                    return;
+                }
+            }
+
         } catch (error) {
             localStorage.removeItem('token');
             router.push('/login');
@@ -80,6 +117,12 @@ export default function CartPage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
+            {error && (
+                <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg mb-6 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="h-2 w-2 rounded-full bg-destructive flex-shrink-0" />
+                    <p className="font-medium text-sm">{error}</p>
+                </div>
+            )}
             <h1 className="text-3xl font-bold text-foreground mb-8">Shopping Cart ({cartItems.length} items)</h1>
 
             <div className="flex flex-col lg:flex-row gap-8">

@@ -4,125 +4,152 @@ import Order from '../models/Order';
 import Product from '../models/Product';
 import { IUser } from '../models/User';
 import sendEmail from '../utils/sendEmail';
+import { acquireLock } from '../utils/lock';
 
 
 // Create new Order with Atomic Stock Updates
 export const newOrder = async (req: Request, res: Response, next: NextFunction) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const {
+        shippingInfo,
+        orderItems,
+        paymentInfo,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+    } = req.body;
+
+    const locks: (() => Promise<void>)[] = [];
 
     try {
-        const {
-            shippingInfo,
-            orderItems,
-            paymentInfo,
-            itemsPrice,
-            taxPrice,
-            shippingPrice,
-            totalPrice,
-        } = req.body;
-
-        // 1. Atomic Stock Deduction
+        // 0. Acquire Distributed Locks (Redis)
         for (const item of orderItems) {
+            const lockKey = `lock:product:${item.product}`;
+            const release = await acquireLock(lockKey);
 
-            // Construct dynamic key for dot notation, e.g., "stock.M"
-            const sizeKey = `stock.${item.size}`;
-
-            const product = await Product.findOneAndUpdate(
-                {
-                    _id: item.product,
-                    [sizeKey]: { $gt: 0 }
-                },
-                {
-                    $inc: { [sizeKey]: -item.quantity }
-                },
-                { session, new: true }
-            );
-
-            if (!product) {
-                await session.abortTransaction();
-                session.endSession();
-                return res.status(409).json({
-                    error: `Out of Stock: Item ${item.name} (Size: ${item.size}) is no longer available.`
+            if (!release) {
+                // Failed to acquire lock, release all previously acquired locks
+                for (const releaseLock of locks) await releaseLock();
+                
+                return res.status(429).json({
+                    error: `System Busy: Item ${item.name} is in high demand. Please try again.`
                 });
             }
+            locks.push(release);
         }
 
-        // 2. Create Order
-        const order = await Order.create([{
-            shippingInfo,
-            orderItems,
-            paymentInfo,
-            itemsPrice,
-            taxPrice,
-            shippingPrice,
-            totalPrice,
-            paidAt: new Date(),
-            user: (req as any).user.id,
-            orderHistory: [{
-                status: "Processing",
-                timestamp: new Date(),
-                comment: "Order Placed"
-            }]
-        }], { session });
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-        await session.commitTransaction();
-        session.endSession();
-
-        // Send Order Confirmation Email (Async - don't block response)
         try {
-            let userEmail = (req as any).user?.email;
-            let userName = (req as any).user?.name;
+            // 1. Atomic Stock Deduction
+            for (const item of orderItems) {
 
-            // If email missing from token, fetch from DB
-            if (!userEmail) {
-                const userDoc = await mongoose.model('User').findById((req as any).user.id);
-                if (userDoc) {
-                    userEmail = (userDoc as any).email;
-                    userName = (userDoc as any).name;
+                // Construct dynamic key for dot notation, e.g., "stock.M"
+                const sizeKey = `stock.${item.size}`;
+
+                const product = await Product.findOneAndUpdate(
+                    {
+                        _id: item.product,
+                        [sizeKey]: { $gt: 0 },
+                        isActive: true
+                    },
+                    {
+                        $inc: { [sizeKey]: -item.quantity }
+                    },
+                    { session, new: true }
+                );
+
+                if (!product) {
+                    await session.abortTransaction();
+                    session.endSession();
+                    return res.status(409).json({
+                        error: `Out of Stock: Item ${item.name} (Size: ${item.size}) is no longer available.`
+                    });
                 }
             }
 
-            if (userEmail) {
-                const message = `Thank you for your order! \n\nOrder ID: ${order[0]._id} \nTransaction ID: ${paymentInfo.id} \nTotal: ₹${order[0].totalPrice}`;
+            // 2. Create Order
+            const order = await Order.create([{
+                shippingInfo,
+                orderItems,
+                paymentInfo,
+                itemsPrice,
+                taxPrice,
+                shippingPrice,
+                totalPrice,
+                paidAt: new Date(),
+                user: (req as any).user.id,
+                orderHistory: [{
+                    status: "Processing",
+                    timestamp: new Date(),
+                    comment: "Order Placed"
+                }]
+            }], { session });
 
-                // Simple HTML Template
-                const html = `
-                    <div style="font-family: Arial, sans-serif; padding: 20px;">
-                        <h2>Order Confirmed!</h2>
-                        <p>Hi ${userName},</p>
-                        <p>Your order <strong>${order[0]._id}</strong> has been successfully placed.</p>
-                        <p><strong>Transaction ID:</strong> ${paymentInfo.id}</p>
-                        <h3>Order Summary</h3>
-                        <p>Total: <strong>₹${order[0].totalPrice}</strong></p>
-                        <p>Status: Processing</p>
-                        <a href="${process.env.FRONTEND_URL}/orders/${order[0]._id}" style="background: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Order</a>
-                    </div>
-                `;
+            await session.commitTransaction();
+            session.endSession();
 
-                await sendEmail({
-                    email: userEmail,
-                    subject: "ShopMate - Invoice & Order Summary",
-                    message,
-                    html
-                });
-            } else {
-                console.warn("User email not found (even after DB fetch), skipping confirmation email.");
+            // Send Order Confirmation Email (Async - don't block response)
+            try {
+                let userEmail = (req as any).user?.email;
+                let userName = (req as any).user?.name;
+
+                // If email missing from token, fetch from DB
+                if (!userEmail) {
+                    const userDoc = await mongoose.model('User').findById((req as any).user.id);
+                    if (userDoc) {
+                        userEmail = (userDoc as any).email;
+                        userName = (userDoc as any).name;
+                    }
+                }
+
+                if (userEmail) {
+                    const message = `Thank you for your order! \n\nOrder ID: ${order[0]._id} \nTransaction ID: ${paymentInfo.id} \nTotal: ₹${order[0].totalPrice}`;
+
+                    // Simple HTML Template
+                    const html = `
+                        <div style="font-family: Arial, sans-serif; padding: 20px;">
+                            <h2>Order Confirmed!</h2>
+                            <p>Hi ${userName},</p>
+                            <p>Your order <strong>${order[0]._id}</strong> has been successfully placed.</p>
+                            <p><strong>Transaction ID:</strong> ${paymentInfo.id}</p>
+                            <h3>Order Summary</h3>
+                            <p>Total: <strong>₹${order[0].totalPrice}</strong></p>
+                            <p>Status: Processing</p>
+                            <a href="${process.env.FRONTEND_URL}/orders/${order[0]._id}" style="background: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Order</a>
+                        </div>
+                    `;
+
+                    await sendEmail({
+                        email: userEmail,
+                        subject: "ShopMate - Invoice & Order Summary",
+                        message,
+                        html
+                    });
+                } else {
+                    console.warn("User email not found (even after DB fetch), skipping confirmation email.");
+                }
+            } catch (emailError) {
+                console.error("Email sending failed", emailError);
             }
-        } catch (emailError) {
-            console.error("Email sending failed", emailError);
+
+            res.status(201).json({
+                success: true,
+                order: order[0], // Order.create with array returns array
+            });
+
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+            console.error("Create Order Error", error);
+            res.status(500).json({ error: "Could not create order" });
         }
-
-        res.status(201).json({
-            success: true,
-            order: order[0], // Order.create with array returns array
-        });
-
-    } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-        console.error("Create Order Error", error);
-        res.status(500).json({ error: "Could not create order" });
+    } finally {
+        // Always release Redis locks
+        for (const releaseLock of locks) {
+            await releaseLock();
+        }
     }
 };
 
@@ -139,13 +166,7 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
             return res.status(400).json({ error: "You have already delivered this order" });
         }
 
-        /* Stock is now deducted at order creation
-        if (req.body.status === "Confirmed" && order.orderStatus !== "Confirmed") {
-            for (const item of order.orderItems) {
-                await updateStock(item.product.toString(), item.quantity, item.size);
-            }
-        }
-        */
+
 
         // Validation for Shipped status
         if (req.body.status === "Shipped") {

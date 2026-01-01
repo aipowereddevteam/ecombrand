@@ -8,7 +8,8 @@ export const ALL_MODULES = [
     'Manage Orders',
     'Packing',
     'Analytics',
-    'User Management'
+    'User Management',
+    'QC_Module'
 ];
 
 export const PERMISSION_HIERARCHY = {

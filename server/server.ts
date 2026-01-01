@@ -19,7 +19,11 @@ import { initOrderWatcher } from './utils/orderWatcher';
 import requestLogger from './middleware/requestLogger';
 import { apiLimiter, strictLimiter } from './middleware/rateLimiter';
 import './workers/emailWorker'; // Initialize worker
+import './workers/refundWorker'; // Initialize refund worker
 import logger from './utils/logger';
+import returnRoutes from './routes/returnRoutes';
+const swaggerUi = require('swagger-ui-express');
+import { specs } from './utils/swagger';
 
 dotenv.config();
 
@@ -46,6 +50,7 @@ app.use(cors({
 app.use(requestLogger); // Apply request logger globally
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs) as any);
 app.use(passport.initialize());
 
 app.use(express.static('public')); // Serve static files if needed
@@ -59,6 +64,7 @@ app.use('/api/v1/products', apiLimiter, productRoutes);
 app.use('/api/v1/payment', strictLimiter, paymentRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/returns', returnRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/admin/analytics', analyticsRoutes);
 app.use('/api/v1/admin', adminRoutes);
@@ -112,7 +118,8 @@ const gracefulShutdown = async () => {
 
         // bullmq worker close
         await import('./workers/emailWorker').then(w => w.default.close());
-        logger.info('Email Worker closed.');
+        await import('./workers/refundWorker').then(w => w.default.close());
+        logger.info('Email and Refund Workers closed.');
 
         process.exit(0);
     } catch (err) {

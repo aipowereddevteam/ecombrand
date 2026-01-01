@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const redisUri = process.env.REDIS_URI || 'redis://localhost:6379';
+const redisUri = process.env.REDIS_URI || 'redis://localhost:6380';
 
 const redis = new Redis(redisUri, {
     maxRetriesPerRequest: null,

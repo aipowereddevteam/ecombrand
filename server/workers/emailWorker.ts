@@ -49,7 +49,7 @@ const emailWorker = new Worker<EmailJobData>(
     },
     {
         connection: {
-            url: process.env.REDIS_URI || 'redis://localhost:6379'
+            url: process.env.REDIS_URI || 'redis://localhost:6380'
         },
         limiter: {
             max: 10, // Max 10 jobs per...

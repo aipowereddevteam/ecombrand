@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Save, Check } from 'lucide-react';
-import { PERMISSION_HIERARCHY } from '../../../../server/utils/adminConstants'; // We can't import from server in client components directly usually in Next.js if it's strict, but often shared utils work if they are pure JS/TS.
+// Cross-repo import removed to fix Docker build
 // If importing from server fails due to 'fs' dependencies, we should duplicate the constant or move it to a shared folder.
 // For now, let's hardcode the hierarchy here to avoid build issues, as frontend/backend sharing can be tricky without a monorepo workspace setup.
 

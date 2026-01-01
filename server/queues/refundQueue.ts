@@ -1,15 +1,19 @@
 import { Queue } from 'bullmq';
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
-// Use the same Redis connection string as the main redis client
 const redisOptions = {
     url: process.env.REDIS_URI || 'redis://localhost:6380'
 };
 
-const emailQueue = new Queue('email-queue', {
+const refundQueue = new Queue('refund-queue', {
     connection: redisOptions
 });
 
-export default emailQueue;
+refundQueue.on('error', (err) => {
+    logger.error('Refund Queue Error:', err);
+});
+
+export default refundQueue;

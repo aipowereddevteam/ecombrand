@@ -43,7 +43,7 @@ export default function SalesTrendChart({ data }: Props) {
                         />
                         <Tooltip
                             contentStyle={{ background: '#fff', border: '1px solid #eee', borderRadius: '8px' }}
-                            formatter={(value: number) => [`₹${value}`, 'Revenue']}
+                            formatter={(value: any) => [`₹${value}`, 'Revenue']}
                         />
                         <Line
                             type="monotone"

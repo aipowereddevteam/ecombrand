@@ -8,4 +8,12 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+import { CircuitBreaker } from './circuitBreaker';
+
+const cb = new CircuitBreaker();
+
+export const uploadToCloudinary = async (path: string, folder: string) => {
+    return cb.fire(() => cloudinary.uploader.upload(path, { folder }));
+};
+
 export default cloudinary;

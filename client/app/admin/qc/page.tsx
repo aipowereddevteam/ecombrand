@@ -33,7 +33,7 @@ export default function AdminQCPanel() {
         }
 
         try {
-            const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/v1/admin/requests?status=Requested`, {
+            const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/admin/requests?status=Requested`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Also fetch QC_Pending, Pickup_Scheduled if needed. 
@@ -42,7 +42,7 @@ export default function AdminQCPanel() {
             // Let's fetch all and filter in UI for now or just fetch 'Requested' and 'QC_Pending'.
             // Actually, let's just fetch all without status filter to see everything, then filter in UI.
             
-            const allRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/v1/admin/requests`, {
+            const allRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/admin/requests`, {
                  headers: { Authorization: `Bearer ${token}` }
             });
             setRequests(allRes.data.requests);
@@ -63,7 +63,7 @@ export default function AdminQCPanel() {
         if (!confirm(`Are you sure you want to mark this as ${action}?`)) return;
 
         try {
-            await axios.patch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/v1/admin/qc`, {
+            await axios.patch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/admin/qc`, {
                 returnRequestId: id,
                 status: action,
                 notes,

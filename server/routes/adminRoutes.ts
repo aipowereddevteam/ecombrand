@@ -1,7 +1,7 @@
 
 import express from 'express';
 import { isAuthenticated, authorizeRoles } from '../middleware/auth';
-import { getAllUsers, updateUserRole, getUserModules, updateUserModules } from '../controllers/adminController';
+import { getAllUsers, updateUserRole, getUserModules, updateUserModules, getAuditLogs } from '../controllers/adminController';
 
 const router = express.Router();
 
@@ -15,5 +15,8 @@ router.patch('/users/:id/role', updateUserRole);
 // Module Management
 router.get('/users/:id/modules', getUserModules);
 router.put('/users/:id/modules', updateUserModules);
+
+// Audit Logs
+router.get('/audit-logs', getAuditLogs);
 
 export default router;

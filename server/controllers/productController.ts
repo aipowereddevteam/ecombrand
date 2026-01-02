@@ -6,6 +6,7 @@ import Order from '../models/Order';
 import cloudinary from '../utils/cloudinary';
 import fs from 'fs';
 import redis from '../utils/redis';
+import { saveAuditLog } from '../utils/auditLogger';
 
 // Helper to define file type since Multer types might be tricky with implicit req
 interface MulterFile {
@@ -257,6 +258,8 @@ export const updateProduct = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Product not found' });
         }
 
+        const oldStock = product.stock ? JSON.parse(JSON.stringify(product.stock)) : {};
+
         // Update basic fields
         if (req.body.title) product.title = req.body.title;
         if (req.body.description) product.description = req.body.description;
@@ -327,6 +330,19 @@ export const updateProduct = async (req: Request, res: Response) => {
 
         await product.save();
 
+        // Audit Log: Stock Change
+        if (req.body.stock) {
+             await saveAuditLog({
+                action: 'STOCK_ADJUSTED',
+                performedBy: (req as any).user ? (req as any).user.id : 'ADMIN',
+                targetId: product._id.toString(),
+                entityType: 'Product',
+                oldValue: { stock: oldStock },
+                newValue: { stock: product.stock },
+                metadata: { endpoint: 'updateProduct', reason: 'Admin Update' }
+            });
+        }
+
         // Invalidate Cache (Safe)
         await invalidateProductCache(req.params.id);
 
@@ -360,6 +376,14 @@ export const deleteProduct = async (req: Request, res: Response) => {
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
         }
+
+        await saveAuditLog({
+             action: 'PRODUCT_DEACTIVATED',
+             performedBy: (req as any).user ? (req as any).user.id : 'ADMIN',
+             targetId: req.params.id,
+             entityType: 'Product',
+             metadata: { endpoint: 'deleteProduct' }
+        });
 
         // Invalidate Cache (Safe)
         await invalidateProductCache(req.params.id);

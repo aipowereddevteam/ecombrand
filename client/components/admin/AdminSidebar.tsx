@@ -63,6 +63,13 @@ export default function AdminSidebar() {
                     </Link>
                 )}
 
+                {canViewUsers && (
+                    <Link href="/admin/logs" className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/logs')}`}>
+                        <FileText size={20} />
+                        <span>System Logs</span>
+                    </Link>
+                )}
+
                 {/* Placeholders for other modules */}
                 {/* <div className="px-4 py-2 text-xs font-semibold text-gray-400 mt-4 uppercase">Modules</div> */}
             </nav>

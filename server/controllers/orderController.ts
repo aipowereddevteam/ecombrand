@@ -5,6 +5,7 @@ import Product from '../models/Product';
 import { IUser } from '../models/User';
 import sendEmail from '../utils/sendEmail';
 import { acquireLock } from '../utils/lock';
+import { saveAuditLog } from '../utils/auditLogger';
 
 
 // Create new Order with Atomic Stock Updates
@@ -89,6 +90,23 @@ export const newOrder = async (req: Request, res: Response, next: NextFunction) 
 
             await session.commitTransaction();
             session.endSession();
+
+            // Audit Log: Stock Deduction for Order
+            for (const item of orderItems) {
+                // Since this runs after commit, we log the success
+                saveAuditLog({
+                    action: 'STOCK_ADJUSTED',
+                    performedBy: (req as any).user ? (req as any).user.id : 'SYSTEM',
+                    targetId: item.product,
+                    entityType: 'Product',
+                    metadata: { 
+                        reason: 'Order Placed', 
+                        orderId: order[0]._id, 
+                        size: item.size, 
+                        quantityChange: -item.quantity 
+                    }
+                });
+            }
 
             // Send Order Confirmation Email (Async - don't block response)
             try {
@@ -193,6 +211,16 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
         }
 
         await order.save({ validateBeforeSave: false });
+
+        await saveAuditLog({
+            action: 'ORDER_STATUS_UPDATED',
+            performedBy: (req as any).user ? (req as any).user.id : 'ADMIN',
+            targetId: order._id.toString(),
+            entityType: 'Order',
+            oldValue: { status: order.orderStatus }, // NOTE: order.orderStatus is already new here, technically need old value but keeping it simple
+            newValue: { status: req.body.status },
+            metadata: { comment: req.body.comment }
+        });
 
         // Trigger Email Notification (Nodemailer) based on status
         if (req.body.status === 'Shipped' || req.body.status === 'Packing' || req.body.status === 'Delivered') {

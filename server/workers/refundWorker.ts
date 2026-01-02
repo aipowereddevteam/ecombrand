@@ -6,6 +6,7 @@ import Order from '../models/Order';
 import Product from '../models/Product';
 import logger from '../utils/logger';
 import redis from '../utils/redis'; // ioredis instance
+import { saveAuditLog } from '../utils/auditLogger';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -47,15 +48,34 @@ const refundWorker = new Worker<RefundJobData>(
             throw new Error(`Could not acquire refund lock for Order ${orderId}. Retrying...`);
         }
 
+        // Audit Log: Initiation
+        await saveAuditLog({
+            action: 'REFUND_INITIATED',
+            performedBy: 'SYSTEM',
+            targetId: returnRequestId,
+            entityType: 'ReturnRequest',
+            metadata: { orderId, amount: refundAmount }
+        });
+
         const session = await mongoose.startSession();
         session.startTransaction();
 
         try {
             // 2. Call Payment Gateway (Mock for now)
-            // In real world: await razorpay.payments.refund(paymentId, { amount: refundAmount * 100 });
+            // In real world: await razorpay.payments.refund(paymentId, { amount: refundAmount * 100, notes: { client_reference_id: returnRequestId } });
             // Simulation:
             const isGatewaySuccess = true; 
             const gatewayTxId = `rfnd_${Math.random().toString(36).substring(7)}`;
+
+            // Log that we are attempting gateway
+             await saveAuditLog({
+                action: 'GATEWAY_REFUND_ATTEMPT',
+                performedBy: 'SYSTEM',
+                targetId: returnRequestId,
+                entityType: 'Payment',
+                correlationId: returnRequestId, // reusing ID for correlation
+                metadata: { client_reference_id: returnRequestId }
+            });
 
             if (!isGatewaySuccess) {
                 throw new Error('Payment Gateway Refund Failed');
@@ -126,11 +146,35 @@ const refundWorker = new Worker<RefundJobData>(
                              { _id: item.product },
                              { $inc: { [sizeKey]: item.quantity } }
                          ).session(session);
+
+                         // Log Stock Adjustment (Silent Failure prevention)
+                         // Note: We can't easily get 'oldValue' here without a read, but we record the delta.
+                         await saveAuditLog({
+                            action: 'STOCK_ADJUSTED',
+                            performedBy: 'SYSTEM',
+                            targetId: item.product.toString(),
+                            entityType: 'Product',
+                            metadata: { 
+                                reason: 'Refund Restock', 
+                                size: originalItem.size, 
+                                quantityChange: item.quantity,
+                                returnRequestId 
+                            }
+                         });
                      }
                 }
             }
 
             await session.commitTransaction();
+            
+            await saveAuditLog({
+                action: 'REFUND_COMPLETED',
+                performedBy: 'SYSTEM',
+                targetId: returnRequestId,
+                entityType: 'ReturnRequest',
+                metadata: { gatewayTxId, status: 'Success' }
+            });
+
             logger.info(`Refund completed successfully for ${returnRequestId}`);
 
         } catch (error: any) {

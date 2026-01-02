@@ -25,7 +25,7 @@ export default function UserManagement() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get(`http://localhost:5000/api/admin/users?keyword=${keyword}`, {
+            const { data } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/users?keyword=${keyword}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUsers(data);
@@ -61,7 +61,7 @@ export default function UserManagement() {
     const handleRoleChange = async (userId: string, newRole: string) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.patch(`http://localhost:5000/api/admin/users/${userId}/role`,
+            await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}/role`,
                 { role: newRole },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

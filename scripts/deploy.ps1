@@ -1,4 +1,3 @@
-# deploy.ps1 - Development Workflow Script
 
 Write-Host "1. Starting Infrastructure (Redis & MongoDB)..." -ForegroundColor Cyan
 docker-compose up -d redis mongodb
@@ -20,12 +19,23 @@ Write-Host "4. Starting Application Stack..." -ForegroundColor Cyan
 docker-compose up -d
 
 Write-Host "Deployment Complete! Checking connectivity..." -ForegroundColor Green
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 15
+
+$TargetUrl = "http://localhost:5000/api/v1/"
+
+Write-Host "Checking Endpoint: $TargetUrl" -ForegroundColor Yellow
+
 if (Test-Connection -ComputerName localhost -Count 1 -Quiet) {
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:5000" -Method Head -UseBasicParsing
+        $response = Invoke-WebRequest -Uri $TargetUrl -Method Head -UseBasicParsing
         Write-Host "Backend is UP (Status: $($response.StatusCode))" -ForegroundColor Green
     } catch {
-        Write-Host "Backend check failed. Check logs with: docker-compose logs -f api-server" -ForegroundColor Red
+        $img = $_.Exception.Response
+        if ($img) {
+             Write-Host "Backend Reachable but returned error: $($img.StatusCode) (This might be expected if no route exists at $TargetUrl)" -ForegroundColor Yellow
+        } else {
+             Write-Host "Backend check failed. Check logs with: docker-compose logs -f api-server" -ForegroundColor Red
+        }
     }
 }
+

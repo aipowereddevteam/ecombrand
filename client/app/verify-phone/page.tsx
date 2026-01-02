@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth } from '../../lib/firebaseConfig';
@@ -45,6 +45,17 @@ export default function VerifyPhonePage() {
         }
     };
 
+    useEffect(() => {
+        // Cleanup ReCAPTCHA on unmount to prevent "client element has been removed" error
+        return () => {
+             if (window.recaptchaVerifier) {
+                 window.recaptchaVerifier.clear();
+                 // @ts-ignore
+                 window.recaptchaVerifier = null;
+             }
+        };
+    }, []);
+
     const onVerifyOTP = async () => {
         setMessage('');
         try {
@@ -66,7 +77,15 @@ export default function VerifyPhonePage() {
                 body: JSON.stringify({ phone: phoneNumber })
             });
 
-            const data = await res.json();
+            let data;
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                // If text is "Unauthorized", handle it gracefully
+                data = { error: text || 'Request failed' };
+            }
 
             if (res.ok) {
                 // Update token with new one containing verified status
@@ -76,12 +95,15 @@ export default function VerifyPhonePage() {
                     router.push('/');
                 }, 1500);
             } else {
-                setMessage(data.error || 'Verification failed on server.');
+                if (res.status === 401) {
+                    setMessage('Session expired or unauthorized. Please login again.');
+                } else {
+                    setMessage(data.error || 'Verification failed on server.');
+                }
             }
-
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error verifying OTP", error);
-            setMessage('Invalid OTP code.');
+            setMessage(error.message || 'Invalid OTP code.');
         }
     };
 

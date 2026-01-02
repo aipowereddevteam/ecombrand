@@ -23,9 +23,9 @@ export default function AnalyticsDashboard() {
                 };
 
                 const [summaryRes, trendRes, topRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/admin/analytics/summary', config),
-                    axios.get('http://localhost:5000/api/admin/analytics/sales-trend', config),
-                    axios.get('http://localhost:5000/api/admin/analytics/top-products', config)
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/summary`, config),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/sales-trend`, config),
+                    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/analytics/top-products`, config)
                 ]);
 
                 setSummary(summaryRes.data);

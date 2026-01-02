@@ -57,7 +57,7 @@ export default function VerifyPhonePage() {
                 return;
             }
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/verify-phone`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/verify-phone`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

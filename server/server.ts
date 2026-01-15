@@ -14,6 +14,7 @@ import userRoutes from './routes/userRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import adminRoutes from './routes/adminRoutes';
 import healthRoutes from './routes/healthRoutes';
+import reportingRoutes from './routes/reportingRoutes';
 import passport from './config/passport';
 import { initOrderWatcher } from './utils/orderWatcher';
 import requestLogger from './middleware/requestLogger';
@@ -67,6 +68,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/returns', returnRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/admin/analytics', analyticsRoutes);
+app.use('/api/v1/admin/reports', reportingRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
 

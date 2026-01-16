@@ -195,7 +195,7 @@ export default function ExecutiveDashboard() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="_id" />
                             <YAxis />
-                            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                            <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
                             <Legend />
                             <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={2} name="Revenue" />
                         </LineChart>
@@ -212,7 +212,7 @@ export default function ExecutiveDashboard() {
                                 cx="50%"
                                 cy="50%"
                                 labelLine={false}
-                                label={(entry) => `${entry._id}: ${((entry.revenue / data.charts.categoryBreakdown.reduce((sum, item) => sum + item.revenue, 0)) * 100).toFixed(0)}%`}
+                                label={(entry: any) => `${entry._id}: ${((entry.revenue / data.charts.categoryBreakdown.reduce((sum, item) => sum + item.revenue, 0)) * 100).toFixed(0)}%`}
                                 outerRadius={80}
                                 fill="#8884d8"
                                 dataKey="revenue"
@@ -221,7 +221,7 @@ export default function ExecutiveDashboard() {
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                            <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
@@ -239,6 +239,7 @@ export default function ExecutiveDashboard() {
                                     <span className="font-bold text-gray-400 text-sm">#{index + 1}</span>
                                     <div>
                                         <p className="font-semibold text-gray-900">{product.name}</p>
+                                        <p className="text-gray-500 text-sm">Churn Rate (90d)</p>
                                         <p className="text-sm text-gray-500">{formatNumber(product.quantity)} units sold</p>
                                     </div>
                                 </div>
@@ -283,6 +284,33 @@ export default function ExecutiveDashboard() {
                         )}
                     </div>
                 </div>
+            </div>
+            {/* Quick Navigation - Added per dash.md requirements */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                <a href="/admin/reports/sales" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Sales Reports</span>
+                </a>
+                <a href="/admin/reports/products" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Product Analytics</span>
+                </a>
+                <a href="/admin/reports/inventory" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Inventory Health</span>
+                </a>
+                <a href="/admin/reports/customers" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Customer Insights</span>
+                </a>
+                <a href="/admin/reports/marketing" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Marketing ROI</span>
+                </a>
+                <a href="/admin/reports/financial" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Financial Reports</span>
+                </a>
+                <a href="/admin/reports/returns" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Returns & Refunds</span>
+                </a>
+                <a href="/admin/reports/reviews" className="p-4 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-center">
+                    <span className="block font-bold text-gray-800">Reviews & Ratings</span>
+                </a>
             </div>
         </div>
     );

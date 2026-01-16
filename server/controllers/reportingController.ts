@@ -312,10 +312,30 @@ export const getSalesReport = async (req: Request, res: Response) => {
             }
         ]);
 
+        // Calculate Sales Goals (Monthly Target: 50,00,000)
+        const MONTHLY_TARGET = 5000000;
+        const currentRevenue = salesData[0].overview[0]?.totalRevenue || 0;
+        const progress = (currentRevenue / MONTHLY_TARGET) * 100;
+        
+        // Calculate remaining days in month
+        const today = new Date();
+        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const daysLeft = lastDayOfMonth.getDate() - today.getDate();
+        
+        const salesGoals = {
+            monthlyTarget: MONTHLY_TARGET,
+            achieved: currentRevenue,
+            progress: Math.min(progress, 100).toFixed(1),
+            remaining: Math.max(MONTHLY_TARGET - currentRevenue, 0),
+            daysLeft,
+            dailyRequiredRate: daysLeft > 0 ? Math.max((MONTHLY_TARGET - currentRevenue) / daysLeft, 0) : 0
+        };
+
         res.json({
             success: true,
             dateRange: { startDate, endDate },
-            data: salesData[0]
+            data: salesData[0],
+            salesGoals
         });
 
     } catch (error: any) {

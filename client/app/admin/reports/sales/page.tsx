@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -27,6 +27,14 @@ interface SalesData {
         count: number;
         revenue: number;
     }>;
+    salesGoals?: {
+        monthlyTarget: number;
+        achieved: number;
+        progress: string;
+        remaining: number;
+        daysLeft: number;
+        dailyRequiredRate: number;
+    };
 }
 
 interface HourlyData {
@@ -224,8 +232,8 @@ export default function SalesAnalytics() {
                                 <div key={day} className="text-center font-semibold text-sm text-gray-700">{day}</div>
                             ))}
                             {hourlyData.labels.timeSlots.map((slot, slotIndex) => (
-                                <>
-                                    <div key={slot} className="text-sm font-semibold text-gray-700 flex items-center">{slot}</div>
+                                <React.Fragment key={slot}>
+                                    <div className="text-sm font-semibold text-gray-700 flex items-center">{slot}</div>
                                     {hourlyData.data[slotIndex].map((value, dayIndex) => (
                                         <div
                                             key={`${slotIndex}-${dayIndex}`}
@@ -235,7 +243,7 @@ export default function SalesAnalytics() {
                                             {value > 0 ? `₹${(value / 1000).toFixed(0)}K` : '-'}
                                         </div>
                                     ))}
-                                </>
+                                </React.Fragment>
                             ))}
                         </div>
                     </div>
@@ -293,6 +301,58 @@ export default function SalesAnalytics() {
                     </table>
                 </div>
             </div>
+
+            {/* Section 7: Sales Goals & Targets */}
+            {salesData.salesGoals && (
+                <div className="bg-white rounded-lg shadow-sm border p-6 mt-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">🎯 Sales Goals & Targets (Monthly)</h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        {/* Progress Gauge / Bar */}
+                        <div>
+                            <div className="flex justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-500">Progress</span>
+                                <span className="text-sm font-bold text-blue-600">{salesData.salesGoals.progress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-6 mb-6 overflow-hidden">
+                                <div 
+                                    className="bg-blue-600 h-6 rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2 text-xs text-white font-bold"
+                                    style={{ width: `${Math.min(Number(salesData.salesGoals.progress), 100)}%` }}
+                                >
+                                    {Number(salesData.salesGoals.progress) > 10 && `${salesData.salesGoals.progress}%`}
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-between text-sm">
+                                <div>
+                                    <p className="text-gray-500">Achieved</p>
+                                    <p className="text-lg font-bold text-gray-900">{formatCurrency(salesData.salesGoals.achieved)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-gray-500">Target</p>
+                                    <p className="text-lg font-bold text-gray-900">{formatCurrency(salesData.salesGoals.monthlyTarget)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Goal Metrics */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
+                                <p className="text-red-600 text-sm font-medium mb-1">Revenue Remaining</p>
+                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(salesData.salesGoals.remaining)}</p>
+                            </div>
+                            <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
+                                <p className="text-orange-600 text-sm font-medium mb-1">Days Left</p>
+                                <p className="text-2xl font-bold text-gray-900">{salesData.salesGoals.daysLeft} Days</p>
+                            </div>
+                            <div className="col-span-2 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <p className="text-blue-600 text-sm font-medium mb-1">Required Daily Sale to Hit Target</p>
+                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(salesData.salesGoals.dailyRequiredRate)} / day</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

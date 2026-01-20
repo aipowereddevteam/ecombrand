@@ -1099,3 +1099,225 @@ Strong Answers Format:
 Example:
 "We used Redis for rate limiting because it supports distributed counting across multiple servers. The alternative was in-memory rate limiting, but that wouldn't work when we scale horizontally. To handle high traffic, we can add more API servers and they'll all share the same rate limit counters in Redis."
 
+
+PART 12: ENTERPRISE TESTING INFRASTRUCTURE
+
+Feature 12.1: Jest + MongoDB Memory Server for Integration Testing
+WHAT
+Comprehensive server-side testing with in-memory database for isolated, fast test execution.
+
+HOW - Backend
+Concepts Used:
+
+MongoDB Memory Server:
+
+File: server/tests/setup.ts
+import { MongoMemoryServer } from 'mongodb-memory-server';
+Creates in-memory MongoDB instance
+No external database required
+Fast startup (~2s), isolated tests
+beforeAll Hook:
+
+beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+});
+afterEach Cleanup:
+
+afterEach(async () => {
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+        await collections[key].deleteMany({});
+    }
+});
+Jest Configuration:
+
+File: server/jest.config.ts
+Coverage thresholds: { lines: 60, functions: 60, branches: 50, statements: 60 }
+TypeScript support via ts-jest
+Test timeout: 15000ms for DB operations
+
+WHY
+Decision Rationale:
+
+In-memory DB over mocks → Tests real MongoDB queries, indexes, transactions
+No external dependencies → CI/CD doesn't need running MongoDB
+Test isolation → Each test starts with clean database
+Fast execution → In-memory = sub-second DB operations
+
+Interview Talking Points
+✅ "MongoDB Memory Server provides real database without external dependencies"
+✅ "Test isolation via afterEach cleanup - no test pollution, fully independent tests"
+✅ "Coverage thresholds enforced - build fails if coverage drops below 60%"
+✅ "TypeScript in tests provides same type safety as production code"
+
+Feature 12.2: Atomic Stock Update Testing with Concurrency
+WHAT
+Tests prevent overselling by validating MongoDB atomic operations under concurrent load.
+
+HOW - Backend
+Concepts Used:
+
+Promise.all for Concurrent Requests:
+
+const updatePromises = [1, 2, 3, 4].map(() =>
+    Product.findOneAndUpdate(
+        { _id: productId, 'stock.M': { $gte: quantity } },
+        { $inc: { 'stock.M': -quantity } },
+        { new: true }
+    )
+);
+const results = await Promise.all(updatePromises);
+File: server/tests/order.test.ts
+Atomic Operation Testing:
+
+Test scenario: 4 concurrent requests for 1 item each, only 3 in stock
+MongoDB query condition: stock.M: { $gte: quantity }
+Atomic decrement: $inc: { 'stock.M': -quantity }
+Expected: 3 successes, 1 failure (null result)
+Result Validation:
+
+const successCount = results.filter(r => r !== null).length;
+expect(successCount).toBe(3);
+expect(failureCount).toBe(1);
+
+const finalProduct = await Product.findById(productId);
+expect(finalProduct!.stock!.M).toBe(0);
+
+WHY
+Decision Rationale:
+
+Tests real-world race conditions → Simulates flash sales, high concurrency
+Validates TOCTOU prevention → Time-Of-Check-Time-Of-Use vulnerability
+MongoDB atomic operations → Single DB operation prevents race conditions
+Critical for e-commerce → Overselling damages brand reputation
+
+Interview Talking Points
+✅ "Promise.all simulates concurrent requests - validates our atomic operations work under load"
+✅ "Tests TOCTOU vulnerability - ensures stock check and decrement are atomic"
+✅ "Critical for flash sales - validates we never oversell inventory"
+✅ "MongoDB's $gte in query + $inc in update = single atomic operation, no race condition"
+
+Feature 12.3: Vitest for Lightning-Fast Client Testing
+WHAT
+Client-side unit testing with Vitest - 10x faster than Jest with modern Vite integration.
+
+HOW - Frontend
+Concepts Used:
+
+Vitest Configuration:
+
+File: client/vitest.config.ts
+import { defineConfig } from 'vitest/config';
+export default defineConfig({
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './tests/setup.ts',
+        coverage: {
+            provider: 'v8',
+            thresholds: { lines: 60, functions: 60 }
+        }
+    }
+});
+React Testing Library:
+
+import { describe, it, expect } from 'vitest';
+import cartReducer, { addToCart } from '../redux/slices/cartSlice';
+
+it('should add new item to cart', () => {
+    const state = cartReducer(initialState, addToCart(mockItem));
+    expect(state.cartItems).toHaveLength(1);
+});
+Next.js Mocking:
+
+File: client/tests/setup.ts
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({ push: vi.fn() }),
+    usePathname: () => '/'
+}));
+Test Organization:
+
+describe('Cart Slice - Redux Logic', () => {
+    describe('addToCart', () => {
+        it('should add new item to empty cart', () => {...});
+        it('should update quantity for existing item', () => {...});
+    });
+});
+
+WHY
+Decision Rationale:
+
+Vitest over Jest → 10x faster hot reload, native Vite integration
+jsdom environment → Simulates browser APIs (localStorage, window)
+Redux testing → Validates business logic without UI complexity
+Mock Next.js → Tests components in isolation
+
+Interview Talking Points
+✅ "Vitest provides instant feedback - tests re-run in <100ms on code changes"
+✅ "Testing Redux reducers validates business logic independently of UI"
+✅ "jsdom environment simulates browser - tests localStorage, window APIs"
+✅ "Mock Next.js router - tests navigation logic without Next.js server"
+
+Feature 12.4: Unified Test Scripts for CI/CD
+WHAT
+Root package.json with scripts to run all tests across server and client in single command.
+
+HOW - DevOps
+Concepts Used:
+
+Root Package.json Scripts:
+
+File: package.json (root)
+{
+    "scripts": {
+        "test": "npm run test:server && npm run test:client",
+        "test:server": "cd server && npm test",
+        "test:client": "cd client && npm test -- --run",
+        "test:coverage": "npm run test:server -- --coverage && npm run test:client -- --coverage"
+    }
+}
+Vitest --run Flag:
+
+Prevents watch mode in CI
+Exits after tests complete
+Required for automated pipelines
+Coverage Aggregation:
+
+Separate reports for server (Jest) and client (Vitest)
+Istanbul format (server), V8 format (client)
+Can be merged with nyc tool
+
+WHY
+Decision Rationale:
+
+Unified commands → Single npm test runs entire test suite
+CI/CD integration → Scripts designed for automation
+--run flag → Prevents CI from hanging in watch mode
+Separate tools → Jest for server (Supertest integration), Vitest for client (speed)
+
+Interview Talking Points
+✅ "Unified test command enables one-click testing in CI/CD pipelines"
+✅ "--run flag prevents tests from hanging in CI - exits after completion"
+✅ "Separate coverage reports allow targeted improvement - identify weak spots"
+✅ "Root package.json acts as orchestrator - manages monorepo testing"
+
+TESTING SUMMARY - KEY ACHIEVEMENTS
+Test Coverage:
+✅ 37 tests across server and client (100% pass rate)
+✅ Authentication: 14 tests (JWT, phone, roles)
+✅ Stock Management: 7 tests (atomic ops, concurrency)
+✅ Cart Logic: 16 tests (add, remove, calculations)
+
+Technical Highlights:
+✅ MongoDB Memory Server - No external dependencies
+✅ Atomic operation testing - Prevents race conditions
+✅ Vitest for speed - 10x faster than Jest
+✅ Coverage thresholds - Enforced quality gates
+✅ CI/CD ready - Automated testing scripts
+
+Interview Excellence:
+✅ "Demonstrates Testing Pyramid approach - unit tests form foundation"
+✅ "In-memory testing eliminates flaky tests from external dependencies"
+✅ "Concurrency testing proves system handles real-world load"
+✅ "60%+ coverage threshold ensures maintainability as codebase grows"

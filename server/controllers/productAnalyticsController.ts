@@ -46,13 +46,13 @@ export const getProductPerformance = async (req: Request, res: Response) => {
                         }
                     ],
                     previousPeriod: [
-                        { 
-                            $match: { 
-                                createdAt: { 
+                        {
+                            $match: {
+                                createdAt: {
                                     $gte: new Date(startDate.getTime() - (endDate.getTime() - startDate.getTime())),
-                                    $lt: startDate 
-                                } 
-                            } 
+                                    $lt: startDate
+                                }
+                            }
                         },
                         { $unwind: '$orderItems' },
                         {
@@ -80,13 +80,13 @@ export const getProductPerformance = async (req: Request, res: Response) => {
         const enrichedData = currentParams.map((item: any) => {
             const product = productMap.get(item._id.toString());
             const prevRevenue = prevRevenueMap.get(item._id.toString()) || 0;
-            
+
             // Calculate total stock
             let totalStock = 0;
             if (product && product.stock) {
                 totalStock = (product.stock.S || 0) + (product.stock.M || 0) + (product.stock.L || 0) + (product.stock.XL || 0) + (product.stock.XXL || 0);
             }
-            
+
             // Calculate trend %
             let trend = 0;
             const currentRev = parseFloat(item.revenue);
@@ -139,11 +139,11 @@ export const getInventoryAnalytics = async (req: Request, res: Response) => {
                     price: 1,
                     category: 1,
                     totalStock: { $add: ["$stock.S", "$stock.M", "$stock.L", "$stock.XL", "$stock.XXL"] },
-                    stockValue: { 
+                    stockValue: {
                         $multiply: [
-                            "$price", 
-                            { $add: ["$stock.S", "$stock.M", "$stock.L", "$stock.XL", "$stock.XXL"] } 
-                        ] 
+                            "$price",
+                            { $add: ["$stock.S", "$stock.M", "$stock.L", "$stock.XL", "$stock.XXL"] }
+                        ]
                     },
                     stock: 1
                 }
@@ -154,10 +154,10 @@ export const getInventoryAnalytics = async (req: Request, res: Response) => {
                     totalProducts: { $sum: 1 },
                     totalStockItems: { $sum: "$totalStock" },
                     totalStockValue: { $sum: "$stockValue" },
-                    lowStockCount: { 
-                        $sum: { 
-                            $cond: [{ $lt: ["$totalStock", 10] }, 1, 0] 
-                        } 
+                    lowStockCount: {
+                        $sum: {
+                            $cond: [{ $lt: ["$totalStock", 10] }, 1, 0]
+                        }
                     },
                     products: { $push: "$$ROOT" } // Keep all products for further analysis if needed
                 }
@@ -168,15 +168,18 @@ export const getInventoryAnalytics = async (req: Request, res: Response) => {
 
         // 2. Dead Stock Analysis (No sales in last 60 days)
         const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
-        
+
         // Find products sold in last 60 days
-        const soldProductIds = await Order.distinct('orderItems.product', {
+        const soldProductIdsRaw = await Order.distinct('orderItems.product', {
             createdAt: { $gte: sixtyDaysAgo }
         });
+        const soldProductIds = soldProductIdsRaw.map((id: any) =>
+            id instanceof mongoose.Types.ObjectId ? id : new mongoose.Types.ObjectId(id)
+        );
 
         // Dead stock = Active products NOT in soldProductIds
         const deadStock = await Product.find({
-            _id: { $nin: soldProductIds },
+            _id: { $nin: soldProductIds as mongoose.Types.ObjectId[] },
             isActive: true
         }).select('name price category stock images');
 
@@ -184,9 +187,9 @@ export const getInventoryAnalytics = async (req: Request, res: Response) => {
         let deadStockValue = 0;
         const deadStockItems = deadStock.map((p: any) => { // Cast p to any to avoid Document type issues
             // Safety check for stock
-            const stockObj = p.stock || { S:0, M:0, L:0, XL:0, XXL:0 };
+            const stockObj = p.stock || { S: 0, M: 0, L: 0, XL: 0, XXL: 0 };
             const stockCount = (stockObj.S || 0) + (stockObj.M || 0) + (stockObj.L || 0) + (stockObj.XL || 0) + (stockObj.XXL || 0);
-            
+
             const value = stockCount * (p.price || 0);
             deadStockValue += value;
             return {

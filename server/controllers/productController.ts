@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import Product, { IProduct } from '../models/Product';
 import Review from '../models/Review';
 import Order from '../models/Order';
-import cloudinary from '../utils/cloudinary';
+import cloudinary, { deleteFromCloudinary } from '../utils/cloudinary';
 import fs from 'fs';
 import redis from '../utils/redis';
 import { saveAuditLog } from '../utils/auditLogger';
@@ -120,7 +120,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
         const cachedProducts = await redis.get(cacheKey);
 
         if (cachedProducts) {
-             return res.status(200).json(JSON.parse(cachedProducts));
+            return res.status(200).json(JSON.parse(cachedProducts));
         }
 
         let query: any = { isActive: true };
@@ -296,9 +296,15 @@ export const updateProduct = async (req: Request, res: Response) => {
             }
 
             if (Array.isArray(deleteIds) && deleteIds.length > 0) {
+                // Remove from database
                 product.images = product.images.filter(
                     img => !deleteIds.includes(img.public_id)
                 );
+
+                // Delete from Cloudinary
+                for (const id of deleteIds) {
+                    await deleteFromCloudinary(id, 'auto');
+                }
             }
         }
 
@@ -332,7 +338,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 
         // Audit Log: Stock Change
         if (req.body.stock) {
-             await saveAuditLog({
+            await saveAuditLog({
                 action: 'STOCK_ADJUSTED',
                 performedBy: (req as any).user ? (req as any).user.id : 'ADMIN',
                 targetId: product._id.toString(),
@@ -378,11 +384,11 @@ export const deleteProduct = async (req: Request, res: Response) => {
         }
 
         await saveAuditLog({
-             action: 'PRODUCT_DEACTIVATED',
-             performedBy: (req as any).user ? (req as any).user.id : 'ADMIN',
-             targetId: req.params.id,
-             entityType: 'Product',
-             metadata: { endpoint: 'deleteProduct' }
+            action: 'PRODUCT_DEACTIVATED',
+            performedBy: (req as any).user ? (req as any).user.id : 'ADMIN',
+            targetId: req.params.id,
+            entityType: 'Product',
+            metadata: { endpoint: 'deleteProduct' }
         });
 
         // Invalidate Cache (Safe)
@@ -395,6 +401,55 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         console.error("Delete Product Error:", error);
+        res.status(500).json({ error: error.message || 'Server Error' });
+    }
+};
+
+// Permanent Delete Product (Hard Delete with Cloudinary Cleanup) -- Admin
+export const permanentDeleteProduct = async (req: Request, res: Response) => {
+    try {
+        const product = await Product.findById(req.params.id);
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Delete all images/videos from Cloudinary
+        if (product.images && product.images.length > 0) {
+            console.log(`Deleting ${product.images.length} media files from Cloudinary for product ${req.params.id}`);
+            for (const image of product.images) {
+                await deleteFromCloudinary(image.public_id, 'auto');
+            }
+        }
+
+        // Delete all reviews associated with this product
+        await Review.deleteMany({ product: req.params.id });
+
+        // Delete product from database
+        await Product.findByIdAndDelete(req.params.id);
+
+        await saveAuditLog({
+            action: 'PRODUCT_PERMANENTLY_DELETED',
+            performedBy: (req as any).user ? (req as any).user.id : 'ADMIN',
+            targetId: req.params.id,
+            entityType: 'Product',
+            metadata: {
+                endpoint: 'permanentDeleteProduct',
+                cloudinaryCleanup: true,
+                mediaCount: product.images.length
+            }
+        });
+
+        // Invalidate Cache (Safe)
+        await invalidateProductCache(req.params.id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Product and all associated media permanently deleted'
+        });
+
+    } catch (error: any) {
+        console.error("Permanent Delete Product Error:", error);
         res.status(500).json({ error: error.message || 'Server Error' });
     }
 };
@@ -600,7 +655,8 @@ export const deleteReview = async (req: Request, res: Response) => {
         const reviewId = req.params.id;
         const userId = (req as any).user.id; // from auth middleware
 
-        const review = await Review.findOneAndDelete({
+        // Find review first to get media IDs before deletion
+        const review = await Review.findOne({
             _id: reviewId,
             user: userId
         });
@@ -609,11 +665,21 @@ export const deleteReview = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Review not found or not authorized' });
         }
 
-        // Hook 'findOneAndDelete' will trigger automatically to update product stats
+        // Delete media from Cloudinary
+        if (review.media && review.media.length > 0) {
+            console.log(`Deleting ${review.media.length} media files from Cloudinary for review ${reviewId}`);
+            for (const media of review.media) {
+                const resourceType = media.type === 'video' ? 'video' : 'image';
+                await deleteFromCloudinary(media.public_id, resourceType);
+            }
+        }
+
+        // Delete review from database (this will trigger post-delete hook for rating recalc)
+        await Review.findByIdAndDelete(reviewId);
 
         res.status(200).json({
             success: true,
-            message: 'Review deleted successfully'
+            message: 'Review and media deleted successfully'
         });
 
     } catch (error) {

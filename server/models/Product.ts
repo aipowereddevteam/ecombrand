@@ -9,7 +9,7 @@ export interface IProduct extends Document {
     images: {
         public_id: string;
         url: string;
-        type?: string; 
+        type?: string;
     }[];
     stock: {
         S: number;
@@ -101,6 +101,25 @@ const productSchema = new mongoose.Schema<IProduct>({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    }
+});
+
+// Pre-delete hook to cleanup Cloudinary resources
+productSchema.pre('findOneAndDelete', async function () {
+    try {
+        const product = await this.model.findOne(this.getQuery());
+        if (product && product.images && product.images.length > 0) {
+            // Dynamically import to avoid circular dependency
+            const { deleteFromCloudinary } = await import('../utils/cloudinary');
+            console.log(`Auto-cleanup: Deleting ${product.images.length} Cloudinary resources for product`);
+
+            for (const image of product.images) {
+                await deleteFromCloudinary(image.public_id, 'auto');
+            }
+        }
+    } catch (error) {
+        console.error('Product pre-delete hook error:', error);
+        // Don't block deletion even if Cloudinary cleanup fails
     }
 });
 

@@ -77,7 +77,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
 };
 
 // Update Profile
-import cloudinary from '../utils/cloudinary';
+import cloudinary, { deleteFromCloudinary, extractPublicIdFromUrl } from '../utils/cloudinary';
 import fs from 'fs';
 
 export const updateUserProfile = async (req: Request, res: Response) => {
@@ -100,6 +100,16 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         // Handle Avatar Upload
         if (req.file) {
             try {
+                // Delete old avatar from Cloudinary if exists
+                if (user.avatar) {
+                    const publicId = extractPublicIdFromUrl(user.avatar);
+                    if (publicId) {
+                        console.log(`Deleting old avatar from Cloudinary: ${publicId}`);
+                        await deleteFromCloudinary(publicId, 'image');
+                    }
+                }
+
+                // Upload new avatar
                 const result = await cloudinary.uploader.upload(req.file.path, {
                     folder: 'avatars',
                     width: 150,
@@ -111,8 +121,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
                 fs.unlinkSync(req.file.path);
             } catch (uploadError) {
                 console.error("Cloudinary Upload Error", uploadError);
-                // Continue saving other details even if image fails, or throw?
-                // For now, log and continue, but ideally warn user.
+                // Continue saving other details even if image fails
             }
         }
 

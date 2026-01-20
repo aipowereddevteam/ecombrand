@@ -99,7 +99,24 @@ reviewSchema.post('save', function (this: IReview) {
 // Call average cost after remove
 reviewSchema.post('findOneAndDelete', async function (doc: IReview | null) {
     if (doc) {
+        // Existing: Calculate average ratings
         await (doc.constructor as any).calcAverageRatings(doc.product);
+
+        // NEW: Clean up Cloudinary media
+        if (doc.media && doc.media.length > 0) {
+            try {
+                const { deleteFromCloudinary } = await import('../utils/cloudinary');
+                console.log(`Post-delete hook: Cleaning up ${doc.media.length} media files from Cloudinary`);
+
+                for (const media of doc.media) {
+                    const resourceType = media.type === 'video' ? 'video' : 'image';
+                    await deleteFromCloudinary(media.public_id, resourceType);
+                }
+            } catch (error) {
+                console.error('Review post-delete media cleanup error:', error);
+                // Don't throw - cleanup failure shouldn't affect the deletion
+            }
+        }
     }
 });
 

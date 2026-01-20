@@ -6,6 +6,7 @@ import {
     getProductDetails,
     updateProduct,
     deleteProduct,
+    permanentDeleteProduct,
     checkStock,
     createReview,
     getProductReviews,
@@ -72,6 +73,14 @@ router.delete(
     isAuthenticated,
     authorizeRoles('admin'),
     deleteProduct
+);
+
+// Permanent Delete (Hard Delete with Cloudinary Cleanup)
+router.delete(
+    '/admin/permanent/:id',
+    isAuthenticated,
+    authorizeRoles('admin'),
+    permanentDeleteProduct
 );
 
 export default router;

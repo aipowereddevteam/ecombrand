@@ -5,12 +5,21 @@ import emailWorker from '../workers/emailWorker';
 
 export const checkHealth = async (req: Request, res: Response) => {
     const healthStatus = {
+        status: 'healthy',
         timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
         services: {
             database: 'UNKNOWN',
             redis: 'UNKNOWN',
             worker: 'UNKNOWN'
-        }
+        },
+        memory: {
+            heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+            heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB',
+            rss: Math.round(process.memoryUsage().rss / 1024 / 1024) + ' MB',
+            external: Math.round(process.memoryUsage().external / 1024 / 1024) + ' MB'
+        },
+        environment: process.env.NODE_ENV || 'development'
     };
 
     let statusCode = 200;
@@ -20,20 +29,28 @@ export const checkHealth = async (req: Request, res: Response) => {
         const dbState = mongoose.connection.readyState;
         // 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
         healthStatus.services.database = dbState === 1 ? 'UP' : 'DOWN';
-        if (dbState !== 1) statusCode = 503;
+        if (dbState !== 1) {
+            statusCode = 503;
+            healthStatus.status = 'degraded';
+        }
     } catch (error) {
         healthStatus.services.database = 'ERROR';
         statusCode = 503;
+        healthStatus.status = 'degraded';
     }
 
     // Check Redis
     try {
         const ping = await redis.ping();
         healthStatus.services.redis = ping === 'PONG' ? 'UP' : 'DOWN';
-        if (ping !== 'PONG') statusCode = 503;
+        if (ping !== 'PONG') {
+            statusCode = 503;
+            healthStatus.status = 'degraded';
+        }
     } catch (error) {
         healthStatus.services.redis = 'ERROR';
         statusCode = 503;
+        healthStatus.status = 'degraded';
     }
 
     // Check BullMQ Worker
@@ -43,7 +60,7 @@ export const checkHealth = async (req: Request, res: Response) => {
             healthStatus.services.worker = 'UP';
         } else {
             healthStatus.services.worker = 'DOWN';
-            // Worker down might not be critical for overall API health, so keeping 200 if others are fine
+            // Worker down might not be critical for overall API health
         }
     } catch (error) {
         healthStatus.services.worker = 'ERROR';

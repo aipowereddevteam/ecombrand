@@ -21,26 +21,19 @@ services:
     build: ./server
     ports:
       - "5000:5000"
-    environment:
-      - PORT=5000
-      - MONGO_URI=mongodb+srv://aipowereddevteam_db_user:y5GEdeXiMTcL7zL7@cluster0.tbmze8y.mongodb.net/ecom
-      - REDIS_URI=redis://redis:6379
-      - JWT_SECRET=ed13abf5-2108-435a-be84-adf9578cfd97
-      - CLIENT_URL=http://localhost:3000
+    env_file:
+      - ./server/.env
     depends_on:
       - mongodb
       - redis
-    env_file:
-      - ./server/.env
     networks:
       - app-network
 
   background-worker:
     build: ./server
-    command: ["npx", "ts-node", "workers/refundWorker.ts"]
-    environment:
-      - MONGO_URI=mongodb+srv://aipowereddevteam_db_user:y5GEdeXiMTcL7zL7@cluster0.tbmze8y.mongodb.net/ecom
-      - REDIS_URI=redis://redis:6379
+    command: [ "npx", "ts-node", "workers/refundWorker.ts" ]
+    env_file:
+      - ./server/.env
     depends_on:
       - mongodb
       - redis
@@ -48,7 +41,7 @@ services:
       - app-network
 
   frontend:
-    build: 
+    build:
       context: ./client
       args:
         NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1

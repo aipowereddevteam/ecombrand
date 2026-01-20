@@ -1,7 +1,50 @@
+# Dependencies
 node_modules
+
+# Build artifacts
 dist
+build
+
+# Version Control
 .git
-.env
+.github
+
+# Environment & Secrets
+.env*
+!.env.example
+
+# Logs
 logs
 *.log
+
+# Testing
 coverage
+*.test.ts
+*.spec.ts
+tests
+__tests__
+
+# Documentation
+*.md
+docs
+README.md
+
+# IDE & Editor
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Temporary Files
+tmp
+*.tmp
+.cache
+
+# CI/CD
+.github
+
+# Misc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

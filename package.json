@@ -10,7 +10,9 @@
         "test:server": "cd server && npm test",
         "test:client": "cd client && npm test -- --run",
         "test:coverage": "npm run test:server -- --coverage && npm run test:client -- --coverage",
-        "test:watch": "npm run test:server -- --watch"
+        "test:watch": "npm run test:server -- --watch",
+        "lighthouse": "npx @lhci/cli@0.13.x autorun",
+        "lighthouse:local": "cd client && npm run build && npm start"
     },
     "devDependencies": {
         "concurrently": "^8.2.2"

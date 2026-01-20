@@ -1,6 +1,8 @@
 import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { initSentry } from './config/sentry';
+import * as Sentry from '@sentry/node';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import mongoose from 'mongoose';
@@ -19,14 +21,19 @@ import passport from './config/passport';
 import { initOrderWatcher } from './utils/orderWatcher';
 import requestLogger from './middleware/requestLogger';
 import { apiLimiter, strictLimiter } from './middleware/rateLimiter';
+import { configureSecurityHeaders } from './middleware/security';
 import './workers/emailWorker'; // Initialize worker
 import './workers/refundWorker'; // Initialize refund worker
 import logger from './utils/logger';
 import returnRoutes from './routes/returnRoutes';
+import testRoutes from './routes/testRoutes';
 const swaggerUi = require('swagger-ui-express');
 import { specs } from './utils/swagger';
 
 dotenv.config();
+
+// Initialize Sentry as early as possible
+initSentry();
 
 connectDB();
 
@@ -43,6 +50,9 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
+// Security headers (must be early)
+configureSecurityHeaders(app);
+
 app.use(cors({
     origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
     credentials: true
@@ -70,11 +80,15 @@ app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/admin/analytics', analyticsRoutes);
 app.use('/api/v1/admin/reports', reportingRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/test', testRoutes); // Test endpoints for Sentry verification
 
 
 app.get('/', (req: Request, res: Response) => {
     res.send('API is running...');
 });
+
+// Sentry error handler must be after all routes
+Sentry.setupExpressErrorHandler(app);
 
 // Socket.io Connection
 io.on('connection', (socket) => {

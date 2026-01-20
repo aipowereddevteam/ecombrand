@@ -1,0 +1,245 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test-server:
+    name: Server Tests & Coverage
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run server tests with coverage
+        working-directory: ./server
+        run: npm run test:ci
+
+      - name: Check server coverage threshold
+        working-directory: ./server
+        run: |
+          COVERAGE=$(node -e "const coverage = require('./coverage/coverage-summary.json'); const total = coverage.total; const avg = (total.lines.pct + total.statements.pct + total.functions.pct + total.branches.pct) / 4; console.log(avg.toFixed(2));")
+          echo "Server coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE% is below 60% threshold"
+            exit 1
+          fi
+          echo "✅ Coverage $COVERAGE% meets threshold"
+
+      - name: Upload server coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-coverage
+          path: server/coverage
+          retention-days: 30
+
+  test-client:
+    name: Client Tests & Coverage
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Run client tests with coverage
+        working-directory: ./client
+        run: npm run test:coverage
+
+      - name: Check client coverage threshold
+        working-directory: ./client
+        run: |
+          COVERAGE=$(node -e "const coverage = require('./coverage/coverage-summary.json'); const total = coverage.total; const avg = (total.lines.pct + total.statements.pct + total.functions.pct + total.branches.pct) / 4; console.log(avg.toFixed(2));")
+          echo "Client coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+            echo "❌ Coverage $COVERAGE% is below 60% threshold"
+            exit 1
+          fi
+          echo "✅ Coverage $COVERAGE% meets threshold"
+
+      - name: Upload client coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-coverage
+          path: client/coverage
+          retention-days: 30
+
+  security-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Audit server dependencies
+        working-directory: ./server
+        run: |
+          npm audit --audit-level=high || echo "::warning::Server has high/critical vulnerabilities"
+          npm audit --json > audit-server.json || true
+
+      - name: Audit client dependencies
+        working-directory: ./client
+        run: |
+          npm audit --audit-level=high || echo "::warning::Client has high/critical vulnerabilities"
+          npm audit --json > audit-client.json || true
+
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-reports
+          path: |
+            server/audit-server.json
+            client/audit-client.json
+          retention-days: 30
+
+  build:
+    name: Build Validation
+    runs-on: ubuntu-latest
+    needs: [test-server, test-client]
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Install client dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Build client (Next.js)
+        working-directory: ./client
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy_key_for_build
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy_domain
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy_project
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy_bucket
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: dummy_sender
+          NEXT_PUBLIC_FIREBASE_APP_ID: dummy_app_id
+
+      - name: Verify server TypeScript compilation
+        working-directory: ./server
+        run: npx tsc --noEmit
+
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd client && npm ci
+          cd ../server && npm ci
+
+      - name: Build Next.js app
+        working-directory: ./client
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy_key_for_build
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy_domain
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy_project
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy_bucket
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: dummy_sender
+          NEXT_PUBLIC_FIREBASE_APP_ID: dummy_app_id
+
+      - name: Start Next.js server
+        working-directory: ./client
+        run: npm start &
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:5000
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy_key_for_build
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy_domain
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy_project
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy_bucket
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: dummy_sender
+          NEXT_PUBLIC_FIREBASE_APP_ID: dummy_app_id
+
+      - name: Wait for server to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+
+      - name: Run Lighthouse CI
+        run: npx @lhci/cli@0.13.x autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci
+          retention-days: 30

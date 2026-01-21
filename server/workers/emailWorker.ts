@@ -49,7 +49,10 @@ const emailWorker = new Worker<EmailJobData>(
     },
     {
         connection: {
-            url: process.env.REDIS_URI || 'redis://localhost:6380'
+            url: process.env.UPSTASH_REDIS_URL || process.env.REDIS_URI || 'redis://localhost:6380',
+            tls: process.env.UPSTASH_REDIS_URL ? {} : undefined,
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false
         },
         limiter: {
             max: 10, // Max 10 jobs per...

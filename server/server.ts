@@ -1,5 +1,7 @@
-import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
+dotenv.config(); // MUST be at the top before any other imports that use env vars
+
+import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import { initSentry } from './config/sentry';
 import * as Sentry from '@sentry/node';
@@ -29,8 +31,6 @@ import returnRoutes from './routes/returnRoutes';
 import testRoutes from './routes/testRoutes';
 const swaggerUi = require('swagger-ui-express');
 import { specs } from './utils/swagger';
-
-dotenv.config();
 
 // Initialize Sentry as early as possible
 initSentry();

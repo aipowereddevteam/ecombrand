@@ -3,9 +3,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Use the same Redis connection string as the main redis client
+// Use Upstash Cloud Redis with fallback
 const redisOptions = {
-    url: process.env.REDIS_URI || 'redis://localhost:6380'
+    url: process.env.UPSTASH_REDIS_URL || process.env.REDIS_URI || 'redis://localhost:6380',
+    tls: process.env.UPSTASH_REDIS_URL ? {} : undefined,
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false
 };
 
 const emailQueue = new Queue('email-queue', {

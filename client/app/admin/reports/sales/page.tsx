@@ -206,7 +206,7 @@ export default function SalesAnalytics() {
                         <YAxis yAxisId="left" />
                         <YAxis yAxisId="right" orientation="right" />
                         <Tooltip 
-                            formatter={(value: number, name: string) => {
+                            formatter={(value: any, name: any) => {
                                 if (name === 'revenue' || name === 'avgOrderValue') {
                                     return formatCurrency(value);
                                 }
@@ -259,7 +259,7 @@ export default function SalesAnalytics() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="_id" />
                         <YAxis />
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip formatter={(value: any) => formatCurrency(value)} />
                         <Legend />
                         <Bar dataKey="revenue" fill="#3B82F6" name="Revenue" />
                         <Bar dataKey="count" fill="#10B981" name="Orders" />

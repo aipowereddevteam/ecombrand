@@ -26,7 +26,6 @@ async function runTest() {
         const user = await User.create({
             name: 'Test Return User',
             email: `return_test_${Date.now()}@example.com`,
-            password: 'password123',
             role: 'user'
         });
         console.log('User created:', user._id);

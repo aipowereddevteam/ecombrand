@@ -132,7 +132,7 @@ export default function FinancialReport() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" />
                                 <YAxis dataKey="_id" type="category" width={100} />
-                                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                <Tooltip formatter={(value: any) => formatCurrency(value)} />
                                 <Bar dataKey="volume" name="Transaction Volume" fill="#8884d8" radius={[0, 4, 4, 0]}>
                                     {paymentMethods.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry._id === 'Razorpay' ? '#3B82F6' : '#F59E0B'} />

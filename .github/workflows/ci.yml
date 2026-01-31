@@ -30,6 +30,13 @@ jobs:
         working-directory: ./server
         run: npm ci
 
+      - name: Setup MongoDB Memory Server
+        working-directory: ./server
+        run: |
+          # Pre-download MongoDB binaries to avoid timeout issues
+          npx mongodb-memory-server-core install || echo "MongoDB binary download skipped"
+        continue-on-error: true
+
       - name: Run server tests with coverage
         working-directory: ./server
         continue-on-error: true

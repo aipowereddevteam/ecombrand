@@ -82,7 +82,7 @@ export default function ReviewModal({ isOpen, onClose, product, orderId, existin
         setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
             const formData = new FormData();
             formData.append('productId', product.id);

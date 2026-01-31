@@ -214,7 +214,7 @@ jobs:
         working-directory: ./client
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+          NEXT_PUBLIC_API_URL: http://0.0.0.0:5000/api/v1
           NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDfpTA2iVzhrtDkBXLUyfyh5V73dE88kOA5ni7a
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: shopmate-4f95e.firebaseapp.com
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: shopmate-4f95e
@@ -256,7 +256,7 @@ jobs:
         working-directory: ./client
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+          NEXT_PUBLIC_API_URL: http://0.0.0.0:5000/api/v1
           NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDfpTA2iVzhrtDkBXLUyfyh5V73dE88kOA5ni7a
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: shopmate-4f95e.firebaseapp.com
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: shopmate-4f95e
@@ -269,7 +269,7 @@ jobs:
         working-directory: ./client
         run: npm start &
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+          NEXT_PUBLIC_API_URL: http://0.0.0.0:5000/api/v1
           NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDfpTA2iVzhrtDkBXLUyfyh5V73dE88kOA5ni7a
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: shopmate-4f95e.firebaseapp.com
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: shopmate-4f95e
@@ -280,7 +280,7 @@ jobs:
 
       - name: Wait for server to be ready
         run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://0.0.0.0:3000; do sleep 2; done'
 
       - name: Run Lighthouse CI
         run: npx @lhci/cli@0.13.x autorun
@@ -328,7 +328,7 @@ jobs:
         with:
           context: ./client
           build-args: |
-            NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+            NEXT_PUBLIC_API_URL=http://0.0.0.0:5000/api/v1
           push: true
           tags: |
             aipowereddevteam/ecombrand-client:latest

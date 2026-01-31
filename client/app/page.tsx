@@ -28,7 +28,7 @@ function HomeContent() {
         const fetchProducts = async () => {
             setLoading(true);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
                 // Note: The backend search API might need tweaking to support category filtering nicely, 
                 // but for now we assume 'keyword' works or we fetch all and filter client side if needed, 
                 // or the backend handles ?keyword as general search.

@@ -1,31 +1,12 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - app-network
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6380:6379" # Hosting on 6380 to avoid local collision
-    networks:
-      - app-network
-
   api-server:
     build: ./server
     ports:
       - "5000:5000"
     env_file:
       - ./server/.env
-    depends_on:
-      - mongodb
-      - redis
     networks:
       - app-network
 
@@ -34,9 +15,6 @@ services:
     command: [ "npx", "ts-node", "workers/refundWorker.ts" ]
     env_file:
       - ./server/.env
-    depends_on:
-      - mongodb
-      - redis
     networks:
       - app-network
 
@@ -44,7 +22,7 @@ services:
     build:
       context: ./client
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+        NEXT_PUBLIC_API_URL: http://0.0.0.0:5000/api/v1
     ports:
       - "3000:3000"
     environment:
@@ -57,6 +35,3 @@ services:
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  mongodb_data:

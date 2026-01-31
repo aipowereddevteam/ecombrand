@@ -43,7 +43,7 @@ export default function NotificationBell() {
                 // Validate API URL (check if it's a valid http/https string)
                 if (!apiUrl || !apiUrl.startsWith('http')) {
                     console.warn("Invalid or missing NEXT_PUBLIC_API_URL, falling back to default.");
-                    apiUrl = 'http://localhost:5000/api';
+                    apiUrl = 'http://0.0.0.0:5000/api';
                 }
 
                 const url = `${apiUrl}/notifications`;
@@ -84,7 +84,7 @@ export default function NotificationBell() {
         const getSocketUrl = () => {
             let url = process.env.NEXT_PUBLIC_API_URL;
             if (!url || !url.startsWith('http')) {
-                return 'http://localhost:5000';
+                return 'http://0.0.0.0:5000';
             }
             return url.replace('/api', '');
         };
@@ -127,7 +127,7 @@ export default function NotificationBell() {
 
             // API Call
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             await fetch(`${apiUrl}/notifications/${id}/read`, {
                 method: 'PUT',
                 headers: {
@@ -147,7 +147,7 @@ export default function NotificationBell() {
 
             // API Call
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             await fetch(`${apiUrl}/notifications/read-all`, {
                 method: 'PUT',
                 headers: {

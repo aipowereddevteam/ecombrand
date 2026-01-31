@@ -60,7 +60,7 @@ export default function SalesAnalytics() {
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState('30days');
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
 
     const fetchData = async () => {
         try {

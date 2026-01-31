@@ -69,7 +69,7 @@ export default function AdminOrders() {
 
         const fetchOrders = async () => {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
             try {
                 const { data } = await axios.get(`${apiUrl}/orders/admin/orders`, {

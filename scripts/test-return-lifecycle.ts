@@ -9,7 +9,7 @@ import refundQueue from '../server/queues/refundQueue';
 
 dotenv.config({ path: './server/.env' }); // Load server env
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecom';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://0.0.0.0:27017/ecom';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

@@ -32,7 +32,7 @@ export default function SystemLogs() {
     // Expanded row for details
     const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
-    const BACKEND_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const BACKEND_API = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
     const fetchLogs = async () => {
         setLoading(true);

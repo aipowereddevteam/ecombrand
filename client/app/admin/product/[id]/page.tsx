@@ -59,7 +59,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
                 const { data } = await axios.get(`${apiUrl}/products/${id}`);
                 const p = data.product;
 
@@ -167,7 +167,7 @@ export default function EditProduct({ params }: { params: Promise<{ id: string }
             });
 
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
             await axios.put(`${apiUrl}/products/admin/${id}`, data, {
                 headers: {

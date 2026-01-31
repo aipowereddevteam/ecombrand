@@ -67,7 +67,7 @@ export default function CartPage() {
             }
 
             // Validate Cart Items (Check Stock & Active Status)
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             for (const item of cartItems) {
                 try {
                     // Route: /api/products/:id/check-stock

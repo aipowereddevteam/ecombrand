@@ -52,7 +52,7 @@ export default function ModuleSelector({ userId, userName, onClose }: ModuleSele
     const fetchUserPermissions = async () => {
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             const { data } = await axios.get(`${apiUrl}/admin/users/${userId}/modules`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -79,7 +79,7 @@ export default function ModuleSelector({ userId, userName, onClose }: ModuleSele
     const handleSave = async () => {
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             await axios.put(`${apiUrl}/admin/users/${userId}/modules`, {
                 modules: assignedScopes
             }, {

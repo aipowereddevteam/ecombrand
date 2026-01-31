@@ -19,7 +19,7 @@ export const fetchWishlist = createAsyncThunk('wishlist/fetch', async (_, { getS
          const token = localStorage.getItem('token');
          if (!token) return [];
 
-         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
          const { data } = await axios.get(`${apiUrl}/user/wishlist`, {
             headers: { Authorization: `Bearer ${token}` }
          });
@@ -34,7 +34,7 @@ export const toggleWishlist = createAsyncThunk('wishlist/toggle', async (product
         const token = localStorage.getItem('token');
         if (!token) throw new Error('Not authenticated');
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
         
         // Optimistic update logic check could be done here, but let's rely on server response for simplicity or implement later
         // Check if item exists to decide Add vs Remove? The backend routes are separate. We need to know state.

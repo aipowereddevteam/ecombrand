@@ -74,7 +74,7 @@ export default function ProductDetails({ params }: { params: Promise<{ id: strin
         }
 
         const fetchProductAndReviews = async () => {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
             try {
                 // Parallel fetch
                 const [productRes, reviewsRes, relatedRes] = await Promise.all([
@@ -113,7 +113,7 @@ export default function ProductDetails({ params }: { params: Promise<{ id: strin
 
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
             await axios.delete(`${apiUrl}/products/reviews/${reviewId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -384,7 +384,7 @@ export default function ProductDetails({ params }: { params: Promise<{ id: strin
                     } : undefined}
                     onSuccess={async () => {
                         // Refresh reviews
-                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
                         const reviewsRes = await axios.get(`${apiUrl}/products/reviews/${id}?sort=${sortBy}`);
                         setReviews(reviewsRes.data.reviews);
                         // Refresh product stats

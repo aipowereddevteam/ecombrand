@@ -5,7 +5,7 @@ import logger from './logger';
 dotenv.config();
 
 // Prefer Upstash Cloud Redis, fallback to local
-const redisUrl = process.env.UPSTASH_REDIS_URL || process.env.REDIS_URI || 'redis://localhost:6380';
+const redisUrl = process.env.UPSTASH_REDIS_URL || process.env.REDIS_URI || 'redis://0.0.0.0:6380';
 
 const redis = new Redis(redisUrl, {
     maxRetriesPerRequest: null,

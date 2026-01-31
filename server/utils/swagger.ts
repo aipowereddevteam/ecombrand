@@ -11,11 +11,11 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000/api/v1',
+        url: 'http://0.0.0.0:5000/api/v1',
         description: 'Local Development Server',
       },
       {
-         url: 'http://localhost:5000/api', 
+         url: 'http://0.0.0.0:5000/api', 
          description: 'Legacy Base URL',
       }
     ],

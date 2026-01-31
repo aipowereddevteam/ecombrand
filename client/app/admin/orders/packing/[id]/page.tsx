@@ -39,7 +39,7 @@ export default function PackingSlip({ params }: { params: Promise<{ id: string }
             // or we assume the admin is already logged in and the token is in local storage.
             // For simplicity, we use the same fetch method.
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             try {
                 const { data: orderData } = await axios.get(`${apiUrl}/orders/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }

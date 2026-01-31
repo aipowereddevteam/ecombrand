@@ -48,7 +48,7 @@ export function usePermission(moduleName: string) {
                 // OPTIMIZATION: Check if we have user profile in localStorage or Context?
                 // Let's call the API for now.
 
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
                 // Wait, normal users can't call admin endpoints. 
                 // We need `GET /api/user/profile` to return `assignedModules`.
 

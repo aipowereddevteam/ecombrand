@@ -55,7 +55,7 @@ export default function OrderDetails({ params }: { params: Promise<{ id: string 
     useEffect(() => {
         const fetchOrder = async () => {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             try {
                 // Fetch Order Details
                 const { data: orderData } = await axios.get(`${apiUrl}/orders/${id}`, {
@@ -78,7 +78,7 @@ export default function OrderDetails({ params }: { params: Promise<{ id: string 
     const updateStatus = async (status: string) => {
         setUpdating(true);
         const token = localStorage.getItem('token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
         try {
             const body: any = { status };

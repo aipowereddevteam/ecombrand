@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://0.0.0.0:5000/api';
 // You might need to update these IDs based on your local DB
 const PRODUCT_ID = '694571f840cb1a047e5a03a1'; 
 const USER_TOKEN = ''; // We will rely on the user to paste this or I will try to login

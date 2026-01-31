@@ -63,7 +63,7 @@ export default function ProductReviewsPage({ params }: { params: Promise<{ id: s
     // Fetch Product Info (Once)
     useEffect(() => {
         const fetchProduct = async () => {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             try {
                 const res = await axios.get(`${apiUrl}/products/${id}`);
                 setProduct(res.data.product);
@@ -84,7 +84,7 @@ export default function ProductReviewsPage({ params }: { params: Promise<{ id: s
     useEffect(() => {
         const fetchReviews = async () => {
             setLoading(true);
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             try {
                 const res = await axios.get(`${apiUrl}/products/reviews/${id}?page=${page}&limit=5&sort=${sortBy}`);
 
@@ -121,7 +121,7 @@ export default function ProductReviewsPage({ params }: { params: Promise<{ id: s
         if (!confirm("Are you sure you want to delete this review?")) return;
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
             await axios.delete(`${apiUrl}/products/reviews/${reviewId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });

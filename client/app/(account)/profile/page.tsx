@@ -38,7 +38,7 @@ export default function ProfilePage() {
             }
 
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
                 const { data } = await axios.get(`${apiUrl}/user/profile`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -78,7 +78,7 @@ export default function ProfilePage() {
     const handleSave = async () => {
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
             const data = new FormData();
             Object.keys(formData).forEach(key => {

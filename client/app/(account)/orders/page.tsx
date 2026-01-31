@@ -58,7 +58,7 @@ export default function MyOrders() {
     const handleReturnSubmit = async (returnRequest: any) => {
         const token = localStorage.getItem('token');
         try {
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/returns/request`, returnRequest, {
+            await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1'}/returns/request`, returnRequest, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Return requested successfully!');
@@ -75,7 +75,7 @@ export default function MyOrders() {
             return;
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
 
         try {
             const [ordersRes, returnsRes] = await Promise.all([

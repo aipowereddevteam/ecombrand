@@ -18,7 +18,7 @@ export default function Home() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
                 const { data } = await axios.get(`${apiUrl}/products`);
                 setProducts(data.products);
             } catch (error) {

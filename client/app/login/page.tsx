@@ -38,7 +38,7 @@ function LoginContent() {
 
     const handleLogin = () => {
         // Redirect to backend auth
-        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/google`;
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1'}/auth/google`;
     };
 
     return (

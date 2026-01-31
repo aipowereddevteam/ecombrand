@@ -37,7 +37,7 @@ export default function InventoryReport() {
     const [categoryStock, setCategoryStock] = useState<CategoryStock[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
 
     const fetchInventory = async () => {
         try {

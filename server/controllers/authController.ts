@@ -23,8 +23,8 @@ export const googleCallback = (req: Request, res: Response) => {
         );
 
         // Redirect to frontend with token
-        // Assuming frontend is running on localhost:3000
-        res.redirect(`http://localhost:3000/login?token=${token}`);
+        // Assuming frontend is running on 0.0.0.0:3000
+        res.redirect(`http://0.0.0.0:3000/login?token=${token}`);
     } catch (error) {
         console.error("Google Callback Error:", error);
         res.status(500).json({ error: 'Server Error' });

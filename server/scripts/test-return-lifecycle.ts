@@ -11,7 +11,7 @@ dotenv.config();
 
 // Ensure we use the same mongo URI as the app or a test one. 
 // For verification on live dev, use the same one but be careful with data.
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecom';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://0.0.0.0:27017/ecom';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

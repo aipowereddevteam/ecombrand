@@ -36,7 +36,7 @@ export default function ExecutiveDashboard() {
     const fetchDashboard = async () => {
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api/v1';
             
             const { data: response } = await axios.get(
                 `${apiUrl}/admin/reports/dashboard?range=${dateRange}`,

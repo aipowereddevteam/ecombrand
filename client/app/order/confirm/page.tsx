@@ -39,7 +39,7 @@ export default function ConfirmOrder() {
     const proceedToPayment = async () => {
         setIsProcessing(true);
         const token = localStorage.getItem('token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
         try {
             // 0. Pre-Flight Stock Check (Frontend)

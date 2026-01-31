@@ -21,7 +21,7 @@ docker-compose up -d
 Write-Host "Deployment Complete! Checking connectivity..." -ForegroundColor Green
 Start-Sleep -Seconds 15
 
-$TargetUrl = "http://localhost:5000/api/v1/"
+$TargetUrl = "http://0.0.0.0:5000/api/v1/"
 
 Write-Host "Checking Endpoint: $TargetUrl" -ForegroundColor Yellow
 

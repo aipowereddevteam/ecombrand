@@ -1,5 +1,5 @@
 // Adjust port if needed (default 5000 based on previous logs)
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'http://0.0.0.0:5000/api';
 
 async function testCaching() {
     try {

@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
-const BASE_URL = 'http://localhost:5001/api/v1/admin/reports';
+const BASE_URL = 'http://0.0.0.0:5001/api/v1/admin/reports';
 
 if (!MONGO_URI || !JWT_SECRET) {
     console.error('❌ Missing MONGO_URI or JWT_SECRET in .env');

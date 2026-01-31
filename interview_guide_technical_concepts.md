@@ -1476,7 +1476,7 @@ File: lighthouserc.json
 {
  \ci\: {
  \collect\: {
- \url\: [\http://localhost:3000\],
+ \url\: [\http://0.0.0.0:3000\],
  \numberOfRuns\: 3,
  \settings\: { \preset\: \desktop\ }
  },

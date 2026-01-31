@@ -18,7 +18,7 @@ export default function UserNotifications() {
             const userId = decoded.id || decoded._id; // Adjust based on your token payload
 
             // Connect to Socket
-            socketRef.current = io(process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000');
+            socketRef.current = io(process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://0.0.0.0:5000');
 
             // Join User Room
             socketRef.current.emit('join-user', userId);

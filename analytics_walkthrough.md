@@ -314,7 +314,7 @@ const exportCSV = () => {
 
 1. **Executive Dashboard**:
    ```
-   http://localhost:3000/admin/reports/dashboard
+   http://0.0.0.0:3000/admin/reports/dashboard
    ```
    - Quick overview with 6 metrics
    - Best for daily check-ins
@@ -322,7 +322,7 @@ const exportCSV = () => {
 
 2. **Sales Analytics**:
    ```
-   http://localhost:3000/admin/reports/sales
+   http://0.0.0.0:3000/admin/reports/sales
    ```
    - Detailed reports
    - Best for deep analysis
@@ -364,11 +364,11 @@ const exportCSV = () => {
 ```bash
 # Test dashboard endpoint
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:5000/api/v1/admin/reports/dashboard?range=30days
+  http://0.0.0.0:5000/api/v1/admin/reports/dashboard?range=30days
 
 # Test sales report
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:5000/api/v1/admin/reports/sales?range=7days
+  http://0.0.0.0:5000/api/v1/admin/reports/sales?range=7days
 ```
 
 ### Frontend Testing:

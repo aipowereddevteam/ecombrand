@@ -125,7 +125,7 @@ One-command deployment with health checks and connectivity validation.
    Start-Sleep -Seconds 15
    
    # 5. Health check
-   $response = Invoke-WebRequest -Uri "http://localhost:5000/api/v1/" -Method Head
+   $response = Invoke-WebRequest -Uri "http://0.0.0.0:5000/api/v1/" -Method Head
    if ($response.StatusCode) {
        Write-Host "Backend is UP" -ForegroundColor Green
    }
@@ -363,7 +363,7 @@ Single repository containing client + server with parallel development.
    
    # Output:
    # [0] Server running on port 5000
-   # [1] Next.js ready on http://localhost:3000
+   # [1] Next.js ready on http://0.0.0.0:3000
    ```
 
 #### WHY
@@ -393,18 +393,18 @@ Structured environment configuration for multiple environments.
    - File: `server/.env` (gitignored)
    ```env
    MONGO_URI=mongodb+srv://...
-   REDIS_URI=redis://localhost:6379
+   REDIS_URI=redis://0.0.0.0:6379
    JWT_SECRET=...
    RAZORPAY_KEY_ID=...
    RAZORPAY_KEY_SECRET=...
    CLOUDINARY_CLOUD_NAME=...
-   FRONTEND_URL=http://localhost:3000
+   FRONTEND_URL=http://0.0.0.0:3000
    ```
 
 2. **Client .env:**
    - File: `client/.env` (gitignored)
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+   NEXT_PUBLIC_API_URL=http://0.0.0.0:5000/api/v1
    NEXT_PUBLIC_FIREBASE_API_KEY=...
    ```
 

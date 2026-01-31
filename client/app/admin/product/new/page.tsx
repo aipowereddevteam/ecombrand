@@ -108,7 +108,7 @@ export default function AddProduct() {
             });
 
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://0.0.0.0:5000/api';
 
             await axios.post(`${apiUrl}/products/admin/new`, data, {
                 headers: {

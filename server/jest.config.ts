@@ -16,6 +16,8 @@ const config: Config = {
         '!utils/redis.ts', // Mocked in tests
         '!server.ts' // Server entry point
     ],
+    coverageDirectory: 'coverage',
+    coverageReporters: ['text', 'json-summary', 'json', 'lcov', 'html'],
     coverageThreshold: {
         global: {
             branches: 0,

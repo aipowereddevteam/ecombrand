@@ -2,6 +2,7 @@
     "name": "ecom-monorepo",
     "version": "1.0.0",
     "scripts": {
+        "postinstall": "cd server && npm install && cd ../client && npm install",
         "build": "npm run build:server && npm run build:client",
         "build:server": "cd server && npm run build",
         "build:client": "cd client && npm run build",

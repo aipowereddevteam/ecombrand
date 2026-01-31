@@ -34,9 +34,20 @@ jobs:
         working-directory: ./server
         run: npm run test:ci
 
+      - name: Debug - List coverage directory
+        working-directory: ./server
+        if: always()
+        run: |
+          echo "Checking coverage directory..."
+          ls -la coverage/ || echo "Coverage directory not found"
+          
       - name: Check server coverage threshold
         working-directory: ./server
         run: |
+          if [ ! -f "./coverage/coverage-summary.json" ]; then
+            echo "❌ Coverage file not found. Tests may have failed or coverage was not generated."
+            exit 1
+          fi
           COVERAGE=$(node -e "const coverage = require('./coverage/coverage-summary.json'); const total = coverage.total; const avg = (total.lines.pct + total.statements.pct + total.functions.pct + total.branches.pct) / 4; console.log(avg.toFixed(2));")
           echo "Server coverage: $COVERAGE%"
           if (( $(echo "$COVERAGE < 0" | bc -l) )); then
@@ -79,9 +90,20 @@ jobs:
         working-directory: ./client
         run: npm run test:coverage
 
+      - name: Debug - List coverage directory
+        working-directory: ./client
+        if: always()
+        run: |
+          echo "Checking coverage directory..."
+          ls -la coverage/ || echo "Coverage directory not found"
+          
       - name: Check client coverage threshold
         working-directory: ./client
         run: |
+          if [ ! -f "./coverage/coverage-summary.json" ]; then
+            echo "❌ Coverage file not found. Tests may have failed or coverage was not generated."
+            exit 1
+          fi
           COVERAGE=$(node -e "const coverage = require('./coverage/coverage-summary.json'); const total = coverage.total; const avg = (total.lines.pct + total.statements.pct + total.functions.pct + total.branches.pct) / 4; console.log(avg.toFixed(2));")
           echo "Client coverage: $COVERAGE%"
           if (( $(echo "$COVERAGE < 0" | bc -l) )); then

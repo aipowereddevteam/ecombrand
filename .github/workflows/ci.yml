@@ -320,8 +320,8 @@ jobs:
           context: ./server
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/shopmate-server:latest
-            ${{ secrets.DOCKER_USERNAME }}/shopmate-server:${{ github.sha }}
+            aipowereddevteam/ecombrand-server:latest
+            aipowereddevteam/ecombrand-server:${{ github.sha }}
 
       - name: Build and push Client
         uses: docker/build-push-action@v5
@@ -331,5 +331,5 @@ jobs:
             NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/shopmate-client:latest
-            ${{ secrets.DOCKER_USERNAME }}/shopmate-client:${{ github.sha }}
+            aipowereddevteam/ecombrand-client:latest
+            aipowereddevteam/ecombrand-client:${{ github.sha }}
